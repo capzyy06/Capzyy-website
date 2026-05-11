@@ -1,0 +1,15 @@
+export const ROUTES = {
+  HOME: '/',
+  SHOP: '/shop',
+  CATEGORY: (slug) => `/category/${slug}`,
+  PRODUCT: (slug) => `/product/${slug}`,
+  CART: '/cart',
+  CHECKOUT: '/checkout',
+  ORDER_CONFIRMATION: (id) => `/order-confirmation/${id}`,
+  SEARCH: '/search',
+  ABOUT: '/about',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  ADMIN: '/admin',
+  ADMIN_LOGIN: '/admin/login',
+};
