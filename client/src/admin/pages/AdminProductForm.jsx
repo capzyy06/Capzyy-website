@@ -10,8 +10,93 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-const EMPTY = { name: '', description: '', price: '', compareAtPrice: '', category: '', stock: '', tags: '', features: '', isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true };
+const EMPTY = {
+  name: '', description: '', price: '', compareAtPrice: '',
+  category: '', stock: '', tags: '', features: '',
+  isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true,
+};
 
+// ─── Section Wrapper ─────────────────────────────────────────────────────────
+function Section({ title, children }) {
+  return (
+    <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      {title && (
+        <div className="px-4 py-3 border-b border-border">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-textSecondary">{title}</span>
+        </div>
+      )}
+      <div className="p-4 space-y-4">{children}</div>
+    </div>
+  );
+}
+
+// ─── Field Components ─────────────────────────────────────────────────────────
+function FieldLabel({ label, required }) {
+  return (
+    <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">
+      {label}{required && <span className="text-rose-400 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+function TextField({ value, onChange, type = 'text', required, placeholder }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      className="input-field w-full text-sm"
+      placeholder={placeholder}
+      required={required}
+      inputMode={type === 'number' ? 'numeric' : undefined}
+    />
+  );
+}
+
+// ─── Toggle Switch ────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange, label, description }) {
+  return (
+    <label className="flex items-center justify-between gap-3 cursor-pointer py-1 group">
+      <div>
+        <p className="text-sm text-white font-medium">{label}</p>
+        {description && <p className="text-xs text-textMuted mt-0.5">{description}</p>}
+      </div>
+      <div
+        className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${
+          checked ? 'bg-white' : 'bg-zinc-700'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full shadow transition-transform duration-200 ${
+            checked ? 'translate-x-5 bg-black' : 'translate-x-0 bg-zinc-400'
+          }`}
+        />
+        <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
+      </div>
+    </label>
+  );
+}
+
+// ─── Image Thumbnail ──────────────────────────────────────────────────────────
+function ImageThumb({ url, onRemove }) {
+  return (
+    <div className="relative group aspect-square w-full rounded-lg overflow-hidden border border-border bg-zinc-900">
+      <img src={url} alt="" className="w-full h-full object-cover" />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity flex items-center justify-center"
+        aria-label="Remove image"
+      >
+        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Form ────────────────────────────────────────────────────────────────
 export default function AdminProductForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -23,13 +108,13 @@ export default function AdminProductForm() {
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
   const { data: catData } = useGetAllCategoriesQuery();
-
-  // BUG C-3 FIX: fetch the specific product by ID directly instead of
-  // loading all products and doing a client-side find() — which silently
-  // fails for any product beyond the first page (limit 20)
   const { data: productData } = useGetProductByIdQuery(id, { skip: !isEdit });
 
   const categories = catData?.categories || [];
+  const isSaving = creating || updating;
+
+  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+  const setCheck = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.checked }));
 
   useEffect(() => {
     if (isEdit && productData?.product) {
@@ -59,8 +144,6 @@ export default function AdminProductForm() {
     try {
       const fd = new FormData();
       files.forEach(f => fd.append('images', f));
-      // BUG S-8 FIX: folder removed from request body — derived server-side
-      // BUG C-5 FIX: Authorization header removed — httpOnly cookie sent automatically
       const { data } = await axios.post(`${BASE}/media/upload`, fd, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -105,89 +188,201 @@ export default function AdminProductForm() {
     }
   };
 
-  const tf = (key, label, type = 'text', required = false, placeholder = '') => (
-    <div>
-      <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">{label}{required && ' *'}</label>
-      <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} className="input-field" placeholder={placeholder} required={required} />
-    </div>
-  );
-
-  const cb = (key, label) => (
-    <label className="flex items-center gap-3 cursor-pointer">
-      <input type="checkbox" checked={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))} className="w-4 h-4 accent-white" />
-      <span className="text-sm text-textSecondary">{label}</span>
-    </label>
-  );
-
   return (
-    <div className="p-8 max-w-3xl">
-      <h1 className="font-display text-4xl tracking-widest text-white mb-8">{isEdit ? 'EDIT PRODUCT' : 'ADD PRODUCT'}</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {tf('name', 'Product Name', 'text', true, 'Hellfire Black Snapback')}
-
-        <div>
-          <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Description *</label>
-          <textarea rows={4} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input-field resize-none" placeholder="Describe the cap..." required />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {tf('price', 'Price (₹)', 'number', true, '1299')}
-          {tf('compareAtPrice', 'Compare at Price (₹)', 'number', false, '1599')}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Category *</label>
-            <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="input-field" required>
-              <option value="">Select category</option>
-              {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+    <div className="min-h-screen bg-background">
+      {/* ── Sticky Header ── */}
+      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border">
+        <div className="px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/products')}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-textSecondary hover:text-white hover:border-zinc-500 transition-colors flex-shrink-0"
+              aria-label="Back"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="font-display text-xl sm:text-3xl tracking-widest text-white truncate">
+              {isEdit ? 'EDIT PRODUCT' : 'ADD PRODUCT'}
+            </h1>
           </div>
-          {tf('stock', 'Stock Qty', 'number', true, '50')}
+          {/* Desktop save button */}
+          <button
+            type="submit"
+            form="product-form"
+            disabled={isSaving}
+            className="hidden sm:flex btn-primary items-center gap-2 flex-shrink-0"
+          >
+            {isSaving && (
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            )}
+            {isSaving ? 'Saving…' : isEdit ? 'Update Product' : 'Create Product'}
+          </button>
         </div>
+      </div>
 
-        {tf('tags', 'Tags (comma-separated)', 'text', false, 'black, snapback, streetwear')}
+      {/* ── Form Body ── */}
+      <form id="product-form" onSubmit={handleSubmit}>
+        <div className="px-4 py-5 sm:px-6 lg:px-8 max-w-3xl mx-auto space-y-4">
 
-        {/* Features — stored as array, edited as comma-separated string */}
-        <div>
-          <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Features (comma-separated)</label>
-          <textarea
-            rows={3}
-            value={form.features}
-            onChange={e => setForm(f => ({ ...f, features: e.target.value }))}
-            className="input-field resize-none"
-            placeholder="100% Cotton, Snapback closure, One size fits all, Structured front panel"
-          />
-          <p className="text-textMuted text-xs mt-1.5">Each feature separated by a comma will appear as an individual tag on the product page.</p>
-        </div>
+          {/* Basic Info */}
+          <Section title="Basic Info">
+            <div>
+              <FieldLabel label="Product Name" required />
+              <TextField value={form.name} onChange={set('name')} required placeholder="Hellfire Black Snapback" />
+            </div>
+            <div>
+              <FieldLabel label="Description" required />
+              <textarea
+                rows={4}
+                value={form.description}
+                onChange={set('description')}
+                className="input-field w-full resize-none text-sm"
+                placeholder="Describe the cap…"
+                required
+              />
+            </div>
+          </Section>
 
-        <div>
-          <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Product Images</label>
-          <div className="flex flex-wrap gap-3 mb-3">
-            {images.map((img, i) => (
-              <div key={i} className="relative w-24 h-24">
-                <img src={img.url} alt="" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => removeImage(i)} className="absolute -top-2 -right-2 w-5 h-5 bg-sale text-white rounded-full text-xs flex items-center justify-center">✕</button>
+          {/* Pricing */}
+          <Section title="Pricing & Inventory">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel label="Price (₹)" required />
+                <TextField value={form.price} onChange={set('price')} type="number" required placeholder="1299" />
               </div>
-            ))}
-            <label className="w-24 h-24 border border-dashed border-border flex items-center justify-center cursor-pointer hover:border-white transition-colors">
-              <span className="text-textMuted text-2xl">{uploading ? '...' : '+'}</span>
-              <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
-            </label>
+              <div>
+                <FieldLabel label="Compare at (₹)" />
+                <TextField value={form.compareAtPrice} onChange={set('compareAtPrice')} type="number" placeholder="1599" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel label="Category" required />
+                <select
+                  value={form.category}
+                  onChange={set('category')}
+                  className="input-field w-full text-sm"
+                  required
+                >
+                  <option value="">Select…</option>
+                  {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <FieldLabel label="Stock Qty" required />
+                <TextField value={form.stock} onChange={set('stock')} type="number" required placeholder="50" />
+              </div>
+            </div>
+          </Section>
+
+          {/* Images */}
+          <Section title="Product Images">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {images.map((img, i) => (
+                <ImageThumb key={i} url={img.url} onRemove={() => removeImage(i)} />
+              ))}
+              {/* Upload button */}
+              <label className={`aspect-square w-full rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-zinc-500 active:bg-zinc-900 transition-colors ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                {uploading ? (
+                  <svg className="w-6 h-6 text-textMuted animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                ) : (
+                  <>
+                    <svg className="w-6 h-6 text-textMuted mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="text-[10px] text-textMuted uppercase tracking-wider">Add</span>
+                  </>
+                )}
+                <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </label>
+            </div>
+            {images.length === 0 && (
+              <p className="text-xs text-textMuted text-center -mt-1">Tap the + tile to upload images</p>
+            )}
+          </Section>
+
+          {/* Tags & Features */}
+          <Section title="Tags & Features">
+            <div>
+              <FieldLabel label="Tags (comma-separated)" />
+              <TextField value={form.tags} onChange={set('tags')} placeholder="black, snapback, streetwear" />
+            </div>
+            <div>
+              <FieldLabel label="Features (comma-separated)" />
+              <textarea
+                rows={3}
+                value={form.features}
+                onChange={set('features')}
+                className="input-field w-full resize-none text-sm"
+                placeholder="100% Cotton, Snapback closure, One size fits all"
+              />
+              <p className="text-textMuted text-xs mt-1.5">Each comma-separated item appears as an individual tag on the product page.</p>
+            </div>
+          </Section>
+
+          {/* Flags */}
+          <Section title="Visibility & Labels">
+            <div className="divide-y divide-border -my-1">
+              <div className="py-2">
+                <Toggle checked={form.isActive} onChange={setCheck('isActive')} label="Active" description="Visible on store" />
+              </div>
+              <div className="py-2">
+                <Toggle checked={form.isFeatured} onChange={setCheck('isFeatured')} label="Featured" description="Shown on homepage" />
+              </div>
+              <div className="py-2">
+                <Toggle checked={form.isNewArrival} onChange={setCheck('isNewArrival')} label="New Arrival" />
+              </div>
+              <div className="py-2">
+                <Toggle checked={form.isBestSeller} onChange={setCheck('isBestSeller')} label="Best Seller" />
+              </div>
+            </div>
+          </Section>
+
+          {/* Mobile sticky footer CTA */}
+          <div className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md border-t border-border px-4 py-3 flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/products')}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="btn-primary flex-1 flex items-center justify-center gap-2"
+            >
+              {isSaving && (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              )}
+              {isSaving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
+            </button>
           </div>
-        </div>
 
-        <div className="space-y-3">
-          <label className="text-xs tracking-widest uppercase text-textSecondary block">Flags</label>
-          {cb('isFeatured', 'Featured (shown on homepage)')}
-          {cb('isNewArrival', 'New Arrival')}
-          {cb('isBestSeller', 'Best Seller')}
-          {cb('isActive', 'Active (visible on store)')}
-        </div>
+          {/* Desktop cancel — inline at bottom */}
+          <div className="hidden sm:flex gap-4 pt-2 pb-8">
+            <button type="submit" form="product-form" disabled={isSaving} className="btn-primary">
+              {isSaving ? 'Saving…' : isEdit ? 'Update Product' : 'Create Product'}
+            </button>
+            <button type="button" onClick={() => navigate('/admin/products')} className="btn-secondary">
+              Cancel
+            </button>
+          </div>
 
-        <div className="flex gap-4 pt-4">
-          <button type="submit" disabled={creating || updating} className="btn-primary">{creating || updating ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}</button>
-          <button type="button" onClick={() => navigate('/admin/products')} className="btn-secondary">Cancel</button>
+          {/* Spacer so mobile sticky footer doesn't cover last section */}
+          <div className="h-20 sm:hidden" />
         </div>
       </form>
     </div>
