@@ -29,7 +29,7 @@ export default function AdminOrderDetail() {
       {/* Back */}
       <button
         onClick={() => navigate('/admin/orders')}
-        className="text-xs text-textSecondary hover:text-white uppercase tracking-wider mb-5 block min-h-[36px] flex items-center"
+        className="text-xs text-textSecondary hover:text-white uppercase tracking-wider mb-5  min-h-[36px] flex items-center"
       >
         ← Back to Orders
       </button>
