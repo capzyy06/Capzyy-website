@@ -22,40 +22,73 @@ export default function AdminOrderDetail() {
   };
 
   if (isLoading) return <Spinner size="lg" className="py-40" />;
-  if (!order) return <div className="p-8 text-textSecondary">Order not found</div>;
+  if (!order) return <div className="p-4 text-textSecondary">Order not found</div>;
 
   return (
-    <div className="p-8 max-w-4xl">
-      <button onClick={() => navigate('/admin/orders')} className="text-xs text-textSecondary hover:text-white uppercase tracking-wider mb-6 block">← Back to Orders</button>
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="font-display text-4xl tracking-widest text-white">{order.orderNumber}</h1>
-          <p className="text-textMuted text-xs mt-1">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl">
+      {/* Back */}
+      <button
+        onClick={() => navigate('/admin/orders')}
+        className="text-xs text-textSecondary hover:text-white uppercase tracking-wider mb-5  min-h-[36px] flex items-center"
+      >
+        ← Back to Orders
+      </button>
+
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-1 mb-4">
+          <h1 className="font-display text-2xl sm:text-4xl tracking-widest text-white leading-tight break-all">
+            {order.orderNumber}
+          </h1>
+          <p className="text-textMuted text-xs">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
         </div>
-        <div className="flex gap-3">
-          <select value={order.status} onChange={e => handleStatusUpdate('status', e.target.value)} className="input-field w-auto text-xs">
-            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+        {/* Status selects — full width stacked on mobile */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <select
+            value={order.status}
+            onChange={e => handleStatusUpdate('status', e.target.value)}
+            className="input-field w-full sm:w-auto text-xs py-2.5 min-h-[40px]"
+          >
+            {STATUS_OPTIONS.map(s => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            ))}
           </select>
-          <select value={order.paymentStatus} onChange={e => handleStatusUpdate('paymentStatus', e.target.value)} className="input-field w-auto text-xs">
-            {PAYMENT_OPTIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          <select
+            value={order.paymentStatus}
+            onChange={e => handleStatusUpdate('paymentStatus', e.target.value)}
+            className="input-field w-full sm:w-auto text-xs py-2.5 min-h-[40px]"
+          >
+            {PAYMENT_OPTIONS.map(s => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            ))}
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {/* Customer + Shipping */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Customer */}
-        <div className="bg-surface border border-border p-6">
-          <h2 className="font-display text-lg tracking-widest text-white mb-4">CUSTOMER</h2>
+        <div className="bg-surface border border-border p-4 sm:p-6">
+          <h2 className="font-display text-base sm:text-lg tracking-widest text-white mb-3">CUSTOMER</h2>
           <div className="space-y-2 text-sm">
-            <p><span className="text-textSecondary">Name:</span> <span className="text-white ml-2">{order.customer.name}</span></p>
-            <p><span className="text-textSecondary">Email:</span> <span className="text-white ml-2">{order.customer.email}</span></p>
-            <p><span className="text-textSecondary">Phone:</span> <span className="text-white ml-2">{order.customer.phone}</span></p>
+            <div className="flex flex-col xs:flex-row xs:gap-2">
+              <span className="text-textSecondary flex-shrink-0">Name:</span>
+              <span className="text-white break-words">{order.customer.name}</span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-2">
+              <span className="text-textSecondary flex-shrink-0">Email:</span>
+              <span className="text-white break-all">{order.customer.email}</span>
+            </div>
+            <div className="flex flex-col xs:flex-row xs:gap-2">
+              <span className="text-textSecondary flex-shrink-0">Phone:</span>
+              <span className="text-white">{order.customer.phone}</span>
+            </div>
           </div>
         </div>
 
         {/* Shipping */}
-        <div className="bg-surface border border-border p-6">
-          <h2 className="font-display text-lg tracking-widest text-white mb-4">SHIPPING ADDRESS</h2>
+        <div className="bg-surface border border-border p-4 sm:p-6">
+          <h2 className="font-display text-base sm:text-lg tracking-widest text-white mb-3">SHIPPING ADDRESS</h2>
           <div className="text-sm text-textSecondary space-y-1">
             <p>{order.shippingAddress?.line1}</p>
             {order.shippingAddress?.line2 && <p>{order.shippingAddress.line2}</p>}
@@ -66,28 +99,54 @@ export default function AdminOrderDetail() {
       </div>
 
       {/* Items */}
-      <div className="bg-surface border border-border mb-6">
-        <div className="p-4 border-b border-border"><h2 className="font-display text-lg tracking-widest text-white">ORDER ITEMS</h2></div>
+      <div className="bg-surface border border-border mb-5">
+        <div className="p-4 border-b border-border">
+          <h2 className="font-display text-base sm:text-lg tracking-widest text-white">ORDER ITEMS</h2>
+        </div>
         <div className="divide-y divide-border">
           {order.items?.map((item, i) => (
-            <div key={i} className="flex items-center gap-4 px-4 py-3">
-              {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover bg-bg" />}
-              <div className="flex-1">
-                <p className="text-white text-sm font-semibold">{item.name}</p>
-                {item.variant?.color && <p className="text-textMuted text-xs">{item.variant.color}{item.variant.size ? ` / ${item.variant.size}` : ''}</p>}
+            <div key={i} className="flex items-center gap-3 px-4 py-3">
+              {item.image && (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-12 h-12 flex-shrink-0 object-cover bg-bg rounded"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{item.name}</p>
+                {item.variant?.color && (
+                  <p className="text-textMuted text-xs">
+                    {item.variant.color}{item.variant.size ? ` / ${item.variant.size}` : ''}
+                  </p>
+                )}
               </div>
-              <p className="text-textSecondary text-sm">× {item.quantity}</p>
-              <p className="text-white text-sm font-semibold">{formatPrice(item.price * item.quantity)}</p>
+              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                <p className="text-textSecondary text-xs">× {item.quantity}</p>
+                <p className="text-white text-sm font-semibold">{formatPrice(item.price * item.quantity)}</p>
+              </div>
             </div>
           ))}
         </div>
+
+        {/* Totals */}
         <div className="p-4 border-t border-border space-y-2">
-          <div className="flex justify-between text-sm text-textSecondary"><span>Subtotal</span><span className="text-white">{formatPrice(order.subtotal)}</span></div>
-          <div className="flex justify-between text-sm text-textSecondary"><span>Shipping</span><span className="text-white">{order.shippingCost === 0 ? 'FREE' : formatPrice(order.shippingCost)}</span></div>
-          <div className="flex justify-between font-bold text-white border-t border-border pt-2"><span>TOTAL</span><span>{formatPrice(order.total)}</span></div>
+          <div className="flex justify-between text-sm text-textSecondary">
+            <span>Subtotal</span>
+            <span className="text-white">{formatPrice(order.subtotal)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-textSecondary">
+            <span>Shipping</span>
+            <span className="text-white">{order.shippingCost === 0 ? 'FREE' : formatPrice(order.shippingCost)}</span>
+          </div>
+          <div className="flex justify-between font-bold text-white border-t border-border pt-2">
+            <span>TOTAL</span>
+            <span>{formatPrice(order.total)}</span>
+          </div>
         </div>
       </div>
 
+      {/* Notes */}
       {order.notes && (
         <div className="bg-surface border border-border p-4">
           <h2 className="text-xs tracking-widest uppercase text-textSecondary mb-2">Customer Notes</h2>
