@@ -46,11 +46,10 @@ export const getCategories = asyncHandler(async (req, res) => {
 // GET /api/v1/categories/all (admin — includes inactive)
 // BUG FIX: duplicate export of getAllCategories removed
 export const getAllCategories = asyncHandler(async (req, res) => {
-  const categories = await Category.find().sort({
-    displayOrder: 1,
-  });
-
+  
+  const categories = await Category.find().sort({ displayOrder: 1 }); 
   res.json({ success: true, categories });
+
 });
 
 // GET /api/v1/categories/:slug

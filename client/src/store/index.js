@@ -8,6 +8,7 @@ import uiReducer from './slices/uiSlice';
 import { productsApi } from './api/productsApi';
 import { categoriesApi } from './api/categoriesApi';
 import { ordersApi } from './api/ordersApi';
+import { heroBannerApi } from './api/heroBannerApi';
 
 const rootReducer = combineReducers({
   cart: persistReducer({ key: 'capzyy-cart', storage }, cartReducer),
@@ -16,13 +17,19 @@ const rootReducer = combineReducers({
   [productsApi.reducerPath]: productsApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,
   [ordersApi.reducerPath]: ordersApi.reducer,
+  [heroBannerApi.reducerPath]: heroBannerApi.reducer,
 });
 
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (gDM) => gDM({
     serializableCheck: { ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER] }
-  }).concat(productsApi.middleware, categoriesApi.middleware, ordersApi.middleware),
+  }).concat(
+    productsApi.middleware,
+    categoriesApi.middleware,
+    ordersApi.middleware,
+    heroBannerApi.middleware,
+  ),
 });
 
 export const persistor = persistStore(store);

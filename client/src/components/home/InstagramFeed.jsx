@@ -13,7 +13,7 @@ export default function InstagramFeed() {
       {/* Header */}
       <div className="flex items-end justify-between mb-10 reveal">
         <div>
-          <p className="font-condensed text-xs tracking-[0.5em] text-white mb-3">— 05 / IRL</p>
+          <p className="font-condensed text-xs tracking-[0.5em] text-[#C8F135] mb-3">— 05 / IRL</p>
           <h2 className="font-display text-6xl md:text-8xl leading-none tracking-tight text-white">
             SEEN ON THE{' '}
             <span className="italic font-body font-light text-textSecondary">streets</span>

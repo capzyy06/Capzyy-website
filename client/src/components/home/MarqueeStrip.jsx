@@ -1,12 +1,14 @@
 import { Star } from 'lucide-react';
 
 const DEFAULT_ITEMS = [
-  'FREE SHIPPING ABOVE ₹999',
-  'NEW DROPS EVERY FRIDAY',
-  'CAPS ONLY',
-  'NO COMPROMISE',
-  'COD AVAILABLE',
-  'SHIPPED NATIONWIDE',
+  'SNAPBACK CAPS',
+  'TRUCKER CAPS',
+  'BUCKET HATS',
+  'CRAZYY  FOR  CAPS !!',
+  'BEANIE CAPS',
+  'FITTED CAPS',
+  'BASEBALL CAPS',
+  '5-PANEL CAPS',
 ];
 
 export default function MarqueeStrip({ items = DEFAULT_ITEMS, invert = false }) {

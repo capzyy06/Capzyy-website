@@ -1,10 +1,11 @@
 import { Star } from 'lucide-react';
 
 const items = [
-  '🧢 FREE SHIPPING ABOVE ₹999',
+  'CRAZY FOR CAPS?!',
+  ' FREE SHIPPING 2+CAPS 🧢',
+  ' BUY 3 GET A SURPRISE🎁CAP FREE',
   'NEW DROPS EVERY WEEK',
-  'CAPS ONLY. NO COMPROMISE.',
-  'COD AVAILABLE',
+  'CAPS ONLY CRAZY DESIGNS',
   'SHIPPED NATIONWIDE',
 ];
 

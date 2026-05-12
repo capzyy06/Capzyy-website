@@ -66,7 +66,6 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   // ── Compute totals server-side ────────────────────────────────────────
-  const SHIPPING_THRESHOLD = 999;
   const SHIPPING_COST = 99;
 
   const subtotal = resolvedItems.reduce(
@@ -74,8 +73,12 @@ export const createOrder = asyncHandler(async (req, res) => {
     0
   );
 
+  // Cap-count based shipping — all products are caps
+  // 2+ caps → FREE, 1 cap → ₹99
+  const capCount = resolvedItems.reduce((sum, item) => sum + item.quantity, 0);
+
   const shippingCost =
-    subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+    capCount >= 2 ? 0 : SHIPPING_COST;
 
   const total = subtotal + shippingCost;
 

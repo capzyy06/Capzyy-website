@@ -17,8 +17,22 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({});
   const [createOrder, { isLoading }] = useCreateOrderMutation();
 
-  const shipping = total >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  // Count total units — this is a caps-only store, all products are caps
+  const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Cap-based shipping logic:
+  // 2+ caps → FREE shipping always
+  // 1 cap   → ₹99 always (price of cap doesn't matter)
+  // 0 caps  → standard threshold logic
+  const shipping =
+    capCount >= 2 ? 0
+    : capCount === 1 ? SHIPPING_COST
+    : total >= SHIPPING_THRESHOLD ? 0
+    : SHIPPING_COST;
+
   const grandTotal = total + shipping;
+  const showCapUpsell = capCount === 1;
+  const showSurpriseMsg = capCount >= 3;
 
   // BUG C-7 FIX: navigate() moved into useEffect — calling it in the render
   // phase is a side effect; React Strict Mode double-invokes renders which
@@ -136,11 +150,35 @@ export default function CheckoutPage() {
               ))}
             </div>
             <div className="border-t border-border mt-6 pt-4 space-y-3 text-sm">
-              <div className="flex justify-between text-textSecondary"><span>Subtotal</span><span className="text-white">{formatPrice(total)}</span></div>
               <div className="flex justify-between text-textSecondary">
-                <span>Shipping</span>
-                <span className={shipping === 0 ? 'text-success' : 'text-white'}>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
+                <span>Subtotal</span>
+                <span className="text-white">{formatPrice(total)}</span>
               </div>
+
+              {/* Shipping row with cap upsell */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-textSecondary">
+                  <span>Shipping</span>
+                  <span className={shipping === 0 ? 'text-success' : 'text-white'}>
+                    {shipping === 0 ? 'FREE' : formatPrice(shipping)}
+                  </span>
+                </div>
+                {showSurpriseMsg ? (
+                  <p className="text-xs text-lime-400 leading-relaxed">
+                    🎁 You're getting a surprise cap with your order!<br/>
+                    (Thank You For Shopping With CAPZYY!)
+                  </p>
+                ) : showCapUpsell ? (
+                  <p className="text-xs text-amber-400 leading-relaxed">
+                    🧢 Add 1 more cap to get free shipping!
+                  </p>
+                ) : capCount === 0 ? (
+                  <p className="text-xs text-amber-400 leading-relaxed">
+                    🧢 Order 2+ caps to get free shipping on your order.
+                  </p>
+                ) : null}
+              </div>
+
               <div className="flex justify-between text-white font-bold text-base border-t border-border pt-3">
                 <span>TOTAL</span><span>{formatPrice(grandTotal)}</span>
               </div>

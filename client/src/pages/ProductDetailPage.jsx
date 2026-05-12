@@ -29,6 +29,9 @@ export default function ProductDetailPage() {
   const discountPercent = product.compareAtPrice > product.price
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100) : 0;
 
+  // Safe features — renders nothing if field is missing, null, or empty
+  const features = Array.isArray(product.features) ? product.features.filter(Boolean) : [];
+
   const handleAddToCart = () => {
     dispatch(addToCart({
       productId: product._id,
@@ -68,6 +71,23 @@ export default function ProductDetailPage() {
           </div>
 
           <p className="text-textSecondary text-sm leading-relaxed">{product.description}</p>
+
+          {/* Features — only renders if at least one feature exists */}
+          {features.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold tracking-widest uppercase text-textSecondary mb-3">Features</p>
+              <div className="flex flex-wrap gap-2">
+                {features.map((feature, index) => (
+                  <span
+                    key={index}
+                    className="text-xs text-textSecondary border border-border px-3 py-1.5 tracking-wide"
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="border-t border-border pt-6 space-y-6">
             {uniqueColors.length > 0 && <ProductColorSelector colors={uniqueColors} selected={selectedColor} onSelect={setSelectedColor} />}

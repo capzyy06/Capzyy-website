@@ -35,6 +35,18 @@ export const productValidationRules = [
     .trim()
     .isLength({ max: 5000 }).withMessage('Description must be 5000 characters or fewer'),
 
+  // Validate features array
+  body('features')
+    .optional()
+    .isArray().withMessage('Features must be an array'),
+
+  body('features.*')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Feature items cannot be empty')
+    .isLength({ max: 200 }).withMessage('Each feature must be 200 characters or fewer')
+    .escape(),
+
   // Sanitise any string fields that get stored and later rendered
   body('name').escape(),
   body('description').escape(),
@@ -225,6 +237,7 @@ export const adminGetAllProducts = asyncHandler(async (req, res) => {
 
   res.json({ success: true, total, products });
 });
+
 // GET /api/v1/products/admin/by-id/:id (Admin)
 export const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)

@@ -30,7 +30,7 @@ export default function CategoryGrid() {
     <section id="caps" className="relative px-5 md:px-10 py-24 md:py-32">
       <div className="flex items-end justify-between mb-12 reveal">
         <div>
-          <p className="font-condensed text-xs tracking-[0.5em] text-white mb-3">— 02 / CATEGORIES</p>
+          <p className="font-condensed text-xs tracking-[0.5em] text-[#C8F135] mb-3">— 02 / CATEGORIES</p>
           <h2 className="font-display text-6xl md:text-8xl leading-none tracking-tight text-white">
             SHOP BY <span className="italic font-body font-light text-textSecondary">style</span>
           </h2>

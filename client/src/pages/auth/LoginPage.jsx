@@ -20,7 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE}/auth/login`, form);
+      const { data } = await axios.post(`${BASE}/auth/login`, form, { withCredentials: true });
       dispatch(setCredentials(data));
       toast.success('Welcome back!');
       if (data.user?.role === 'admin') {

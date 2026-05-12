@@ -34,7 +34,7 @@ export default function FeaturedCollection() {
       {/* Header */}
       <div className="flex items-end justify-between px-5 md:px-10 mb-10 reveal">
         <div>
-          <p className="font-condensed text-xs tracking-[0.5em] text-white mb-3">— 03 / TOP HEAT</p>
+          <p className="font-condensed text-xs tracking-[0.5em] text-[#C8F135] mb-3">— 03 / TOP HEAT</p>
           <h2 className="font-display text-6xl md:text-8xl leading-none tracking-tight text-white">
             FEATURED
           </h2>

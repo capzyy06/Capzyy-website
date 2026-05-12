@@ -10,7 +10,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-const EMPTY = { name: '', description: '', price: '', compareAtPrice: '', category: '', stock: '', tags: '', isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true };
+const EMPTY = { name: '', description: '', price: '', compareAtPrice: '', category: '', stock: '', tags: '', features: '', isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true };
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -42,6 +42,7 @@ export default function AdminProductForm() {
         category: p.category?._id || '',
         stock: p.stock,
         tags: p.tags?.join(', ') || '',
+        features: p.features?.join(', ') || '',
         isFeatured: p.isFeatured,
         isNewArrival: p.isNewArrival,
         isBestSeller: p.isBestSeller,
@@ -87,6 +88,7 @@ export default function AdminProductForm() {
       compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
       stock: Number(form.stock),
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      features: form.features.split(',').map(f => f.trim()).filter(Boolean),
       images,
     };
     try {
@@ -145,6 +147,19 @@ export default function AdminProductForm() {
         </div>
 
         {tf('tags', 'Tags (comma-separated)', 'text', false, 'black, snapback, streetwear')}
+
+        {/* Features — stored as array, edited as comma-separated string */}
+        <div>
+          <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Features (comma-separated)</label>
+          <textarea
+            rows={3}
+            value={form.features}
+            onChange={e => setForm(f => ({ ...f, features: e.target.value }))}
+            className="input-field resize-none"
+            placeholder="100% Cotton, Snapback closure, One size fits all, Structured front panel"
+          />
+          <p className="text-textMuted text-xs mt-1.5">Each feature separated by a comma will appear as an individual tag on the product page.</p>
+        </div>
 
         <div>
           <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Product Images</label>
