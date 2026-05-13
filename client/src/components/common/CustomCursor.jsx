@@ -1,9 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function CustomCursor() {
   const ref = useRef(null);
+  const [isPointerDevice, setIsPointerDevice] = useState(false);
 
   useEffect(() => {
+    const mq = window.matchMedia('(pointer: fine)');
+    setIsPointerDevice(mq.matches);
+
+    const handler = (e) => setIsPointerDevice(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!isPointerDevice) return;
+
     const dot = ref.current;
     if (!dot) return;
 
@@ -26,7 +38,9 @@ export default function CustomCursor() {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseover', over);
     };
-  }, []);
+  }, [isPointerDevice]);
+
+  if (!isPointerDevice) return null;
 
   return <div ref={ref} className="cursor-dot" aria-hidden="true" />;
 }
