@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logo from '../assets/capzyy-logo.jpeg';
+import logo from '../assets/Capzyy_logo.png';
 
 export default function AboutPage() {
   return (
@@ -143,7 +143,7 @@ export default function AboutPage() {
       </section>
 
       {/* Giant wordmark */}
-      <section className="overflow-hidden border-y border-border">
+      {/* <section className="overflow-hidden border-y border-border">
         <div className="py-10">
 
           <h2 className="font-display text-[20vw] leading-[0.8] tracking-tight text-center text-white/10 uppercase select-none">
@@ -154,7 +154,7 @@ export default function AboutPage() {
           </h2>
 
         </div>
-      </section>
+      </section> */}
 
       {/* Footer line */}
       <section className="max-w-7xl mx-auto px-5 md:px-10 py-10">
