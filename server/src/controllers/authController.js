@@ -1,17 +1,28 @@
-// authController.js
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // Shared cookie options
+// sameSite:'none' + secure:true are both required for cross-site cookies
+// (frontend and backend on different domains, e.g. Render)
 const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // ← fix
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  httpOnly: true,          // JS cannot read the cookie — XSS safe
+  secure: isProd,          // HTTPS only in production
+  sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-site in prod
+  maxAge: 7 * 24 * 60 * 60 * 1000,  // 7 days in ms
 };
 
-// POST /api/v1/auth/register
+// clearCookie must receive the EXACT same options as set (except maxAge)
+// otherwise the browser ignores the clear instruction
+const clearOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'none' : 'lax',
+};
+
+// ── POST /api/v1/auth/register ────────────────────────────────────
 export const register = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body;
 
@@ -19,9 +30,21 @@ export const register = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Name, email and password are required');
   }
+  
+  // Basic email format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400);
+    throw new Error('Invalid email address');
+  }
 
-  const existingUser = await User.findOne({ email });
+  // Password length check
+  if (password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
+  }
 
+  const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
   if (existingUser) {
     res.status(400);
     throw new Error('Email already registered');
@@ -29,17 +52,21 @@ export const register = asyncHandler(async (req, res) => {
 
   const user = await User.create({ name, email, password, phone });
 
-  // BUG C-5 FIX: set token as httpOnly cookie, not in response body
   res.cookie('token', generateToken(user._id), cookieOptions);
 
   res.status(201).json({ success: true, user });
 });
 
-// POST /api/v1/auth/login
+// ── POST /api/v1/auth/login ───────────────────────────────────────
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  if (!email || !password) {
+    res.status(400);
+    throw new Error('Email and password are required');
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
 
   if (!user || !(await user.matchPassword(password))) {
     res.status(401);
@@ -47,8 +74,8 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   if (!user.isActive) {
-    res.status(401);
-    throw new Error('Account disabled');
+    res.status(403);
+    throw new Error('Account disabled. Please contact support.');
   }
 
   res.cookie('token', generateToken(user._id), cookieOptions);
@@ -56,11 +83,18 @@ export const login = asyncHandler(async (req, res) => {
   res.json({ success: true, user });
 });
 
-// POST /api/v1/auth/admin/login
+// ── POST /api/v1/auth/admin/login ─────────────────────────────────
 export const adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email, role: 'admin' });
+  if (!email || !password) {
+    res.status(400);
+    throw new Error('Email and password are required');
+  }
+
+  // Only fetch admin-role users — non-admin emails get the same
+  // "Invalid credentials" response to avoid role enumeration
+  const user = await User.findOne({ email: email.toLowerCase().trim(), role: 'admin' });
 
   if (!user || !(await user.matchPassword(password))) {
     res.status(401);
@@ -68,7 +102,7 @@ export const adminLogin = asyncHandler(async (req, res) => {
   }
 
   if (!user.isActive) {
-    res.status(401);
+    res.status(403);
     throw new Error('Account disabled');
   }
 
@@ -77,14 +111,16 @@ export const adminLogin = asyncHandler(async (req, res) => {
   res.json({ success: true, user });
 });
 
-// POST /api/v1/auth/logout
+// ── POST /api/v1/auth/logout ──────────────────────────────────────
+// FIX: clearCookie must use the same path/domain/secure/sameSite flags
+// that were used when setting the cookie, otherwise browsers ignore it.
+// maxAge/expires must be OMITTED from clearOptions (browser handles expiry).
 export const logout = asyncHandler(async (req, res) => {
-  // BUG C-5 FIX: clear the cookie server-side on logout
-  res.clearCookie('token', cookieOptions);
+  res.clearCookie('token', clearOptions);
   res.json({ success: true, message: 'Logged out' });
 });
 
-// GET /api/v1/auth/me
+// ── GET /api/v1/auth/me ───────────────────────────────────────────
 export const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, user: req.user });
 });
