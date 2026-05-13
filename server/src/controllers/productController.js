@@ -1,22 +1,29 @@
 import asyncHandler from 'express-async-handler';
-import { body, query, param, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
-// Reusable helper — throws a 400 if any validation rule failed
+// ── Reusable validation helper ────────────────────────────────────────────────
 const validate = (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    throw new Error(errors.array().map(e => e.msg).join(', '));
+    throw new Error(errors.array().map((e) => e.msg).join(', '));
   }
 };
 
-// Validation rules for create / update
+// ── Validation rules for create / update ─────────────────────────────────────
+// FIX: removed body('name').escape() and body('description').escape()
+// .escape() HTML-encodes characters — "Men's Cap" becomes "Men&#x27;s Cap"
+// stored literally in MongoDB and rendered raw in the UI.
+// React escapes output by default, so XSS protection is already handled
+// at render time. .trim() and length limits are sufficient here.
 export const productValidationRules = [
   body('name')
     .trim()
     .notEmpty().withMessage('Product name is required')
     .isLength({ max: 200 }).withMessage('Name must be 200 characters or fewer'),
+    // ← NO .escape() here — would corrupt "Men's Cap" → "Men&#x27;s Cap"
 
   body('price')
     .notEmpty().withMessage('Price is required')
@@ -34,8 +41,8 @@ export const productValidationRules = [
     .optional()
     .trim()
     .isLength({ max: 5000 }).withMessage('Description must be 5000 characters or fewer'),
+    // ← NO .escape() — description may contain intentional punctuation/symbols
 
-  // Validate features array
   body('features')
     .optional()
     .isArray().withMessage('Features must be an array'),
@@ -44,100 +51,80 @@ export const productValidationRules = [
     .optional()
     .trim()
     .notEmpty().withMessage('Feature items cannot be empty')
-    .isLength({ max: 200 }).withMessage('Each feature must be 200 characters or fewer')
-    .escape(),
-
-  // Sanitise any string fields that get stored and later rendered
-  body('name').escape(),
-  body('description').escape(),
+    .isLength({ max: 200 }).withMessage('Each feature must be 200 characters or fewer'),
+    // ← .escape() removed from features too — same corruption risk
 ];
 
-// GET /api/v1/products
+// ── GET /api/v1/products ──────────────────────────────────────────────────────
 export const getProducts = asyncHandler(async (req, res) => {
   const {
     category,
     minPrice,
     maxPrice,
     sort,
-    page = 1,
+    page  = 1,
     limit = 12,
     search,
   } = req.query;
 
-  const query = {
-    isActive: true,
-  };
+  const filter = { isActive: true };
 
   if (category) {
-    query.category = category;
+    // FIX: validate that category is a valid ObjectId before querying
+    // passing a non-ObjectId string throws a CastError and crashes
+    if (!mongoose.isValidObjectId(category)) {
+      res.status(400);
+      throw new Error('Invalid category ID');
+    }
+    filter.category = category;
   }
 
-  // BUG S-11 FIX: guard against NaN being silently added to the price query
   if (minPrice || maxPrice) {
-    query.price = {};
-
-    if (minPrice && isFinite(Number(minPrice))) {
-      query.price.$gte = Number(minPrice);
-    }
-
-    if (maxPrice && isFinite(Number(maxPrice))) {
-      query.price.$lte = Number(maxPrice);
-    }
-
-    // Drop the empty price object if neither guard passed
-    if (!Object.keys(query.price).length) {
-      delete query.price;
-    }
+    filter.price = {};
+    if (minPrice && isFinite(Number(minPrice))) filter.price.$gte = Number(minPrice);
+    if (maxPrice && isFinite(Number(maxPrice))) filter.price.$lte = Number(maxPrice);
+    if (!Object.keys(filter.price).length) delete filter.price;
   }
 
   if (search) {
-    query.$text = { $search: search };
+    // FIX: $text requires the text index — safe, no ReDoS risk
+    // Trim + cap length to prevent oversized search queries
+    const safeSearch = search.trim().slice(0, 100);
+    if (safeSearch) filter.$text = { $search: safeSearch };
   }
 
   const sortMap = {
-    newest: { createdAt: -1 },
-    oldest: { createdAt: 1 },
-    'price-asc': { price: 1 },
+    newest:       { createdAt: -1 },
+    oldest:       { createdAt:  1 },
+    'price-asc':  { price:  1 },
     'price-desc': { price: -1 },
   };
 
-  const sortObj = sortMap[sort] || { createdAt: -1 };
+  const sortObj   = sortMap[sort] || { createdAt: -1 };
+  const pageNum   = Math.max(1, Number(page));
+  const limitNum  = Math.min(50, Math.max(1, Number(limit))); // cap at 50
 
-  const total = await Product.countDocuments(query);
-
-  const products = await Product.find(query)
-    .populate('category', 'name slug')
-    .sort(sortObj)
-    .skip((page - 1) * limit)
-    .limit(Number(limit));
+  const [total, products] = await Promise.all([
+    Product.countDocuments(filter),
+    Product.find(filter)
+      .populate('category', 'name slug')
+      .sort(sortObj)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum),
+  ]);
 
   res.json({
     success: true,
     total,
-    page: Number(page),
-    pages: Math.ceil(total / limit),
+    page:  pageNum,
+    pages: Math.ceil(total / limitNum),
     products,
   });
 });
 
-// GET /api/v1/products/featured
+// ── GET /api/v1/products/featured ─────────────────────────────────────────────
 export const getFeatured = asyncHandler(async (req, res) => {
-  const products = await Product.find({
-    isFeatured: true,
-    isActive: true,
-  })
-    .populate('category', 'name slug')
-    .limit(8);
-
-  res.json({ success: true, products });
-});
-
-// GET /api/v1/products/new-arrivals
-export const getNewArrivals = asyncHandler(async (req, res) => {
-  const products = await Product.find({
-    isNewArrival: true,
-    isActive: true,
-  })
+  const products = await Product.find({ isFeatured: true, isActive: true })
     .populate('category', 'name slug')
     .sort({ createdAt: -1 })
     .limit(8);
@@ -145,24 +132,38 @@ export const getNewArrivals = asyncHandler(async (req, res) => {
   res.json({ success: true, products });
 });
 
-// GET /api/v1/products/bestsellers
+// ── GET /api/v1/products/new-arrivals ─────────────────────────────────────────
+export const getNewArrivals = asyncHandler(async (req, res) => {
+  const products = await Product.find({ isNewArrival: true, isActive: true })
+    .populate('category', 'name slug')
+    .sort({ createdAt: -1 })
+    .limit(8);
+
+  res.json({ success: true, products });
+});
+
+// ── GET /api/v1/products/bestsellers ──────────────────────────────────────────
 export const getBestsellers = asyncHandler(async (req, res) => {
-  const products = await Product.find({
-    isBestSeller: true,
-    isActive: true,
-  })
+  const products = await Product.find({ isBestSeller: true, isActive: true })
     .populate('category', 'name slug')
     .limit(8);
 
   res.json({ success: true, products });
 });
 
-// GET /api/v1/products/:slug
+// ── GET /api/v1/products/:slug ────────────────────────────────────────────────
 export const getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({
-    slug: req.params.slug,
-    isActive: true,
-  }).populate('category', 'name slug');
+  // FIX: sanitise slug — only allow lowercase letters, numbers, hyphens
+  // malformed slugs could cause unexpected DB behaviour
+  const slug = req.params.slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+  if (!slug) {
+    res.status(400);
+    throw new Error('Invalid product slug');
+  }
+
+  const product = await Product.findOne({ slug, isActive: true })
+    .populate('category', 'name slug');
 
   if (!product) {
     res.status(404);
@@ -172,8 +173,7 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
   res.json({ success: true, product });
 });
 
-// POST /api/v1/products (Admin)
-// BUG S-7 FIX: apply productValidationRules in the route, validate here
+// ── POST /api/v1/products  (Admin) ────────────────────────────────────────────
 export const createProduct = asyncHandler(async (req, res) => {
   validate(req, res);
 
@@ -183,9 +183,14 @@ export const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, product });
 });
 
-// PUT /api/v1/products/:id (Admin)
+// ── PUT /api/v1/products/:id  (Admin) ─────────────────────────────────────────
 export const updateProduct = asyncHandler(async (req, res) => {
   validate(req, res);
+
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400);
+    throw new Error('Invalid product ID');
+  }
 
   const product = await Product.findByIdAndUpdate(
     req.params.id,
@@ -201,8 +206,13 @@ export const updateProduct = asyncHandler(async (req, res) => {
   res.json({ success: true, product });
 });
 
-// DELETE /api/v1/products/:id (Admin - soft delete)
+// ── DELETE /api/v1/products/:id  (Admin — soft delete) ────────────────────────
 export const deleteProduct = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400);
+    throw new Error('Invalid product ID');
+  }
+
   const product = await Product.findByIdAndUpdate(
     req.params.id,
     { isActive: false },
@@ -217,29 +227,45 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Product removed' });
 });
 
-// GET /api/v1/products/admin/all (Admin - includes inactive)
+// ── GET /api/v1/products/admin/all  (Admin — includes inactive) ───────────────
 export const adminGetAllProducts = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, search } = req.query;
 
-  const query = {};
+  const filter = {};
 
   if (search) {
-    query.$text = { $search: search };
+    const safeSearch = search.trim().slice(0, 100);
+    if (safeSearch) filter.$text = { $search: safeSearch };
   }
 
-  const total = await Product.countDocuments(query);
+  const pageNum  = Math.max(1, Number(page));
+  const limitNum = Math.min(100, Math.max(1, Number(limit)));
 
-  const products = await Product.find(query)
-    .populate('category', 'name slug')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(Number(limit));
+  const [total, products] = await Promise.all([
+    Product.countDocuments(filter),
+    Product.find(filter)
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum),
+  ]);
 
-  res.json({ success: true, total, products });
+  res.json({
+    success: true,
+    total,
+    page:  pageNum,
+    pages: Math.ceil(total / limitNum),
+    products,
+  });
 });
 
-// GET /api/v1/products/admin/by-id/:id (Admin)
+// ── GET /api/v1/products/admin/by-id/:id  (Admin) ─────────────────────────────
 export const getProductById = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400);
+    throw new Error('Invalid product ID');
+  }
+
   const product = await Product.findById(req.params.id)
     .populate('category', 'name slug');
 
