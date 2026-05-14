@@ -1,9 +1,25 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// BUG C-5 FIX: token removed from Redux state entirely.
-// Authentication is now handled via httpOnly cookie set by the server.
-// The cookie is sent automatically on every request via credentials: 'include'
-// in the shared baseQuery — no token ever touches localStorage or JS memory.
+const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+// Verify cookie is still valid on app load by hitting /auth/me
+// If cookie is gone (mobile browser cleared it), this will fail
+// and we force logout — preventing "not authorized" on API calls
+export const rehydrateAuth = createAsyncThunk(
+  'auth/rehydrate',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(`${BASE}/auth/me`, {
+        withCredentials: true,
+      });
+      return data.user;
+    } catch {
+      return rejectWithValue(null);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -14,12 +30,23 @@ const authSlice = createSlice({
     setCredentials: (state, { payload }) => {
       state.user = payload.user;
       state.isAuthenticated = true;
-      // token intentionally not stored here
     },
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(rehydrateAuth.fulfilled, (state, { payload }) => {
+        state.user = payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(rehydrateAuth.rejected, (state) => {
+        // Cookie is gone — clear Redux state too
+        state.user = null;
+        state.isAuthenticated = false;
+      });
   },
 });
 
