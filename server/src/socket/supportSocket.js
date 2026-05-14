@@ -27,21 +27,26 @@ const supportSocket = (io) => {
   const supportNs = io.of("/support");
 
   // ── Auth handshake ──────────────────────────────────────────────
+  // BUG FIX: client connects with withCredentials:true (cookie-based auth),
+  // but the original code looked for socket.handshake.auth.token — which the
+  // client never sends. Result: every socket connection was rejected with
+  // "Authentication required", breaking the entire Support chat feature.
+  //
+  // Fix: parse the JWT from the "token" httpOnly cookie in the handshake headers,
+  // matching the same cookie the REST auth middleware reads.
   supportNs.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
+    // Parse cookies from the handshake headers (Socket.IO includes them when
+    // withCredentials:true is set on the client)
+    const cookieHeader = socket.handshake.headers?.cookie || '';
+    const tokenMatch = cookieHeader.match(/(?:^|;\s*)token=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
 
     if (!token) {
-      return next(
-        new Error("Authentication required")
-      );
+      return next(new Error("Authentication required"));
     }
 
     try {
-      socket.user = jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      ); // { id, role }
-
+      socket.user = jwt.verify(token, process.env.JWT_SECRET); // { id, role }
       next();
     } catch {
       next(new Error("Invalid token"));

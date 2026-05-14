@@ -18,6 +18,13 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
 
+// ─── 0. Trust reverse proxy (Render, Railway, Heroku, Nginx, etc.) ──
+// Without this, Express sees all requests as HTTP (the proxy terminates TLS).
+// Consequence: cookies with secure:true are NEVER sent — every API call fails
+// with "Not authorized, no token" on production/mobile even after login.
+// '1' means trust exactly one hop of proxy headers (X-Forwarded-Proto etc.)
+app.set('trust proxy', 1);
+
 // ─── 1. CORS must come first — before helmet, limiters, everything ──
 const allowedOrigins = [
   process.env.CLIENT_URL,
