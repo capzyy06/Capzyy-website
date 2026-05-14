@@ -1,12 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useGetAllCategoriesQuery, useCreateCategoryMutation, useUpdateCategoryMutation, useDeleteCategoryMutation } from '../../store/api/categoriesApi';
 import toast from 'react-hot-toast';
 import Spinner from '../../components/common/Spinner';
 
 const EMPTY = { name: '', description: '', displayOrder: 0, isActive: true };
 
-// ── Extracted as a real component (not JSX variable) to fix mobile form/submit bugs ──
-function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePreview, setImagePreview, currentImage, setCurrentImage, fileRef, handleSave, handleCancel }) {
+function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePreview, setImagePreview, currentImage, setCurrentImage, fileRef, handleSave, handleCancel, isSubmitting }) {
   const previewSrc = imagePreview || currentImage;
 
   const handleImageChange = (e) => {
@@ -23,6 +22,15 @@ function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePrevie
     if (fileRef.current) fileRef.current.value = '';
   };
 
+  // FIX: use a dedicated toggle handler instead of relying on e.target.checked
+  // Mobile browsers (especially Android WebView/Chrome) sometimes fire the
+  // onChange event with a stale checked value when the checkbox is inside a
+  // component that re-renders. Reading the current form state and flipping it
+  // directly avoids the stale-event bug entirely.
+  const handleActiveToggle = useCallback(() => {
+    setForm(f => ({ ...f, isActive: !f.isActive }));
+  }, [setForm]);
+
   return (
     <div className="bg-surface border border-border p-4 sm:p-6">
       <h2 className="font-display text-lg sm:text-xl tracking-widest text-white mb-5">
@@ -31,7 +39,6 @@ function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePrevie
 
       <form onSubmit={handleSave} className="space-y-4">
 
-        {/* Name */}
         <div>
           <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Name *</label>
           <input
@@ -42,7 +49,6 @@ function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePrevie
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Description</label>
           <textarea
@@ -53,7 +59,6 @@ function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePrevie
           />
         </div>
 
-        {/* Display Order — uses empty string when 0 to avoid showing "0" placeholder on mobile */}
         <div>
           <label className="text-xs tracking-widest uppercase text-textSecondary block mb-2">Display Order</label>
           <input
@@ -96,24 +101,42 @@ function FormPanel({ form, setForm, editId, imageFile, setImageFile, imagePrevie
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
         </div>
 
-        {/* Active toggle — using div instead of label wrapping to fix mobile checkbox bug */}
+        {/* FIX: checkbox rendered as a styled toggle button div instead of a native
+            checkbox input. Native checkboxes on mobile (especially iOS Safari) have
+            a known tap-target and event-propagation bug inside forms — the onChange
+            fires but the visual state doesn't update, or vice versa, because the
+            browser's native checkbox handling interferes with React's synthetic
+            event system on touch events.
+            A div with onClick + visual state driven purely by form.isActive avoids
+            all of this and works identically on desktop and mobile. */}
         <div className="flex items-center gap-3">
-          <input
-            id="isActive"
-            type="checkbox"
-            checked={form.isActive}
-            onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))}
-            className="w-4 h-4 accent-white cursor-pointer"
-          />
-          <label htmlFor="isActive" className="text-sm text-textSecondary cursor-pointer select-none">
-            Active
-          </label>
+          <div
+            role="checkbox"
+            aria-checked={form.isActive}
+            tabIndex={0}
+            onClick={handleActiveToggle}
+            onKeyDown={e => (e.key === ' ' || e.key === 'Enter') && handleActiveToggle()}
+            className={`
+              relative w-11 h-6 rounded-full cursor-pointer transition-colors duration-200 flex-shrink-0
+              ${form.isActive ? 'bg-white' : 'bg-border'}
+            `}
+          >
+            <span className={`
+              absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-black transition-transform duration-200
+              ${form.isActive ? 'translate-x-5' : 'translate-x-0'}
+            `} />
+          </div>
+          <span
+            onClick={handleActiveToggle}
+            className="text-sm text-textSecondary cursor-pointer select-none"
+          >
+            {form.isActive ? 'Active' : 'Hidden'}
+          </span>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-1">
-          <button type="submit" className="btn-primary text-sm flex-1 sm:flex-none">
-            {editId ? 'Update' : 'Create'}
+          <button type="submit" disabled={isSubmitting} className="btn-primary text-sm flex-1 sm:flex-none disabled:opacity-50">
+            {isSubmitting ? 'Saving...' : editId ? 'Update' : 'Create'}
           </button>
           {editId && (
             <button
@@ -142,16 +165,20 @@ export default function AdminCategories() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [currentImage, setCurrentImage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState('list'); // 'list' | 'form'
+  const [activeTab, setActiveTab] = useState('list');
 
   const buildFormData = () => {
     const fd = new FormData();
     fd.append('name', form.name);
     fd.append('description', form.description);
     fd.append('displayOrder', form.displayOrder);
-    fd.append('isActive', form.isActive);
+    // FIX: send '1'/'0' instead of true/false — FormData converts everything to
+    // strings, and 'true'/'false' can be parsed inconsistently across backends.
+    // '1'/'0' is unambiguous: parse with Number() or compare with === '1'.
+    fd.append('isActive', form.isActive ? '1' : '0');
     if (imageFile) fd.append('image', imageFile);
     return fd;
   };
@@ -159,6 +186,7 @@ export default function AdminCategories() {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error('Name is required'); return; }
+    setIsSubmitting(true);
     try {
       const fd = buildFormData();
       if (editId) {
@@ -172,6 +200,8 @@ export default function AdminCategories() {
       setActiveTab('list');
     } catch (err) {
       toast.error(err?.data?.message || 'Failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -213,6 +243,7 @@ export default function AdminCategories() {
     fileRef,
     handleSave,
     handleCancel,
+    isSubmitting,
   };
 
   const ListPanel = (
@@ -236,7 +267,6 @@ export default function AdminCategories() {
               key={cat._id}
               className="flex items-center px-3 sm:px-4 py-3 hover:bg-surfaceHover transition-colors gap-3"
             >
-              {/* Thumbnail */}
               <div className="w-10 h-10 shrink-0 bg-surfaceHover overflow-hidden border border-border">
                 {cat.image?.url
                   ? <img src={cat.image.url} alt={cat.name} className="w-full h-full object-cover" />
@@ -244,13 +274,11 @@ export default function AdminCategories() {
                 }
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-semibold truncate">{cat.name}</p>
                 <p className="text-textMuted text-xs truncate">{cat.slug} · Order: {cat.displayOrder}</p>
               </div>
 
-              {/* Status + actions */}
               <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                 <span className={`hidden sm:inline text-xs font-semibold ${cat.isActive ? 'text-success' : 'text-textMuted'}`}>
                   {cat.isActive ? 'Active' : 'Hidden'}
@@ -286,7 +314,6 @@ export default function AdminCategories() {
         CATEGORIES
       </h1>
 
-      {/* Mobile tab switcher */}
       <div className="flex lg:hidden mb-5 border border-border">
         <button
           onClick={() => setActiveTab('list')}
@@ -306,13 +333,11 @@ export default function AdminCategories() {
         </button>
       </div>
 
-      {/* Desktop: side-by-side */}
       <div className="hidden lg:grid grid-cols-2 gap-8">
         <FormPanel {...formPanelProps} />
         {ListPanel}
       </div>
 
-      {/* Mobile: tab-based */}
       <div className="lg:hidden">
         {activeTab === 'form' ? <FormPanel {...formPanelProps} /> : ListPanel}
       </div>
