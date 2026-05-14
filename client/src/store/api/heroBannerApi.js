@@ -14,12 +14,14 @@ export const heroBannerApi = createApi({
     getHeroBanner: builder.query({
       query: () => '/',
       providesTags: ['HeroBanner'],
+      keepUnusedDataFor: 0,
     }),
 
     // ── Admin ────────────────────────────────────────────────
     adminGetHeroBanner: builder.query({
       query: () => '/admin',
       providesTags: ['HeroBanner'],
+      keepUnusedDataFor: 0,
     }),
 
     addSlide: builder.mutation({
