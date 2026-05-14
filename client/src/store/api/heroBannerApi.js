@@ -1,37 +1,40 @@
 // store/api/heroBannerApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+// BUG FIX: was defining its own inline fetchBaseQuery with baseUrl that appended
+// "/hero-banner" to VITE_API_BASE_URL. In production VITE_API_BASE_URL already
+// ends with "/api/v1", so every request hit ".../api/v1/hero-banner/hero-banner/..."
+// → 404s on all Hero Banner admin actions. Now uses the shared baseQuery and
+// each endpoint prefixes "/hero-banner" explicitly — matching the server route mount.
+import { createApi } from '@reduxjs/toolkit/query/react';
+import baseQuery from './baseQuery';
 
 export const heroBannerApi = createApi({
   reducerPath: 'heroBannerApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/hero-banner`,
-    credentials: 'include', // sends httpOnly auth cookie automatically
-  }),
+  baseQuery,
   tagTypes: ['HeroBanner'],
 
   endpoints: builder => ({
     // ── Public ──────────────────────────────────────────────
     getHeroBanner: builder.query({
-      query: () => '/',
+      query: () => '/hero-banner',
       providesTags: ['HeroBanner'],
       keepUnusedDataFor: 0,
     }),
 
     // ── Admin ────────────────────────────────────────────────
     adminGetHeroBanner: builder.query({
-      query: () => '/admin',
+      query: () => '/hero-banner/admin',
       providesTags: ['HeroBanner'],
       keepUnusedDataFor: 0,
     }),
 
     addSlide: builder.mutation({
-      query: body => ({ url: '/slides', method: 'POST', body }),
+      query: body => ({ url: '/hero-banner/slides', method: 'POST', body }),
       invalidatesTags: ['HeroBanner'],
     }),
 
     updateSlide: builder.mutation({
       query: ({ slideId, ...body }) => ({
-        url: `/slides/${slideId}`,
+        url: `/hero-banner/slides/${slideId}`,
         method: 'PUT',
         body,
       }),
@@ -39,13 +42,13 @@ export const heroBannerApi = createApi({
     }),
 
     deleteSlide: builder.mutation({
-      query: slideId => ({ url: `/slides/${slideId}`, method: 'DELETE' }),
+      query: slideId => ({ url: `/hero-banner/slides/${slideId}`, method: 'DELETE' }),
       invalidatesTags: ['HeroBanner'],
     }),
 
     reorderSlides: builder.mutation({
       query: order => ({
-        url: '/slides/reorder',
+        url: '/hero-banner/slides/reorder',
         method: 'PATCH',
         body: { order },
       }),
@@ -53,7 +56,7 @@ export const heroBannerApi = createApi({
     }),
 
     updateBannerSettings: builder.mutation({
-      query: body => ({ url: '/settings', method: 'PATCH', body }),
+      query: body => ({ url: '/hero-banner/settings', method: 'PATCH', body }),
       invalidatesTags: ['HeroBanner'],
     }),
   }),
