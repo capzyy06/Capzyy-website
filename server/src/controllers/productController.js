@@ -207,25 +207,31 @@ export const updateProduct = asyncHandler(async (req, res) => {
 });
 
 // ── DELETE /api/v1/products/:id  (Admin — soft delete) ────────────────────────
+// ── DELETE /api/v1/products/:id  (Admin — hard delete) ────────────────────────
 export const deleteProduct = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     res.status(400);
     throw new Error('Invalid product ID');
   }
 
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    { isActive: false },
-    { new: true }
-  );
+  // ❌ Remove this
+  // const product = await Product.findByIdAndUpdate(
+  //   req.params.id,
+  //   { isActive: false },
+  //   { new: true }
+  // );
+
+  // ✅ Replace with this
+  const product = await Product.findByIdAndDelete(req.params.id);
 
   if (!product) {
     res.status(404);
     throw new Error('Product not found');
   }
 
-  res.json({ success: true, message: 'Product removed' });
+  res.json({ success: true, message: 'Product deleted' });
 });
+
 
 // ── GET /api/v1/products/admin/all  (Admin — includes inactive) ───────────────
 export const adminGetAllProducts = asyncHandler(async (req, res) => {
