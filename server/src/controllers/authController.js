@@ -4,13 +4,39 @@ import generateToken from '../utils/generateToken.js';
 
 const isProd = process.env.NODE_ENV === 'production';
 
-// Shared cookie options
-// sameSite:'none' + secure:true are both required for cross-site cookies
-// (frontend and backend on different domains, e.g. Render)
+// ─── Cookie domain strategy ────────────────────────────────────────────────
+//
+// WHY THIS MATTERS FOR MOBILE:
+// Safari iOS, Chrome Android, and Firefox all block third-party cookies by
+// default. If your frontend (capzyy.com) and backend (api.capzyy.com) are on
+// different domains, the browser treats the cookie as third-party and refuses
+// to store or send it — causing every API call to fail with "Not authorized,
+// no token", especially on mobile.
+//
+// THE FIX:
+// Set COOKIE_DOMAIN=.capzyy.com (note the leading dot — it covers all
+// subdomains). With a shared root domain, sameSite:'lax' is sufficient and
+// works on every browser including iOS Safari with ITP enabled.
+//
+// DEPLOYMENT REQUIREMENTS:
+//   - Frontend must be on:  capzyy.com  (or www.capzyy.com)
+//   - Backend must be on:   api.capzyy.com
+//   - Set env var on server: COOKIE_DOMAIN=.capzyy.com
+//   - Both must be served over HTTPS in production
+//
+// LOCAL DEVELOPMENT:
+//   - Leave COOKIE_DOMAIN unset — cookie defaults to localhost, sameSite:'lax'
+// ──────────────────────────────────────────────────────────────────────────
+
+const cookieDomain = isProd && process.env.COOKIE_DOMAIN
+  ? process.env.COOKIE_DOMAIN   // e.g. ".capzyy.com"
+  : undefined;                  // undefined = browser uses request host (localhost)
+
 const cookieOptions = {
-  httpOnly: true,          // JS cannot read the cookie — XSS safe
-  secure: isProd,          // HTTPS only in production
-  sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-site in prod
+  httpOnly: true,               // JS cannot read the cookie — XSS safe
+  secure: isProd,               // HTTPS only in production
+  sameSite: isProd ? 'lax' : 'lax', // 'lax' works for same root domain (subdomain)
+  domain: cookieDomain,         // undefined in dev, '.capzyy.com' in prod
   maxAge: 7 * 24 * 60 * 60 * 1000,  // 7 days in ms
 };
 
@@ -19,7 +45,8 @@ const cookieOptions = {
 const clearOptions = {
   httpOnly: true,
   secure: isProd,
-  sameSite: isProd ? 'none' : 'lax',
+  sameSite: isProd ? 'lax' : 'lax',
+  domain: cookieDomain,
 };
 
 // ── POST /api/v1/auth/register ────────────────────────────────────
