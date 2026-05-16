@@ -23,7 +23,7 @@ const CheckoutPage         = lazy(() => import('./pages/CheckoutPage'));
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage'));
 const SearchPage           = lazy(() => import('./pages/SearchPage'));
 const AboutPage            = lazy(() => import('./pages/AboutPage'));
-
+const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
 // Admin pages — all lazy; never needed by customer bundle
 const AdminLogin           = lazy(() => import('./admin/AdminLogin'));
 const AdminDashboard       = lazy(() => import('./admin/pages/AdminDashboard'));
@@ -61,6 +61,7 @@ export default function App() {
             <Route path="/cart"                     element={<CartPage />} />
             <Route path="/checkout"                 element={<CheckoutPage />} />
             <Route path="/order-confirmation/:id"   element={<OrderConfirmationPage />} />
+            <Route path="/my-orders" element={<MyOrdersPage />} />
             <Route path="/search"                   element={<SearchPage />} />
             <Route path="/about"                    element={<AboutPage />} />
             <Route path="/contact"                  element={<Contact />} />

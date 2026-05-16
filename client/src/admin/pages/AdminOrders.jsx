@@ -5,11 +5,12 @@ import { formatPrice } from '../../utils/formatPrice';
 import Spinner from '../../components/common/Spinner';
 
 const STATUS_COLORS = {
-  pending: 'text-yellow-400 bg-yellow-400/10',
+  pending:   'text-yellow-400 bg-yellow-400/10',
   confirmed: 'text-blue-400 bg-blue-400/10',
-  shipped: 'text-purple-400 bg-purple-400/10',
+  shipped:   'text-purple-400 bg-purple-400/10',
   delivered: 'text-green-400 bg-green-400/10',
   cancelled: 'text-red-400 bg-red-400/10',
+  rejected:  'text-red-400 bg-red-400/10',
 };
 
 export default function AdminOrders() {
@@ -36,7 +37,7 @@ export default function AdminOrders() {
           className="input-field w-full sm:w-40"
         >
           <option value="">All Status</option>
-          {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map(s => (
+          {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'rejected'].map(s => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
           ))}
         </select>
