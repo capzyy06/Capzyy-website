@@ -226,7 +226,7 @@ export default function Navbar() {
                     )}
 
                     <Link
-                      to="/orders"
+                      to="/my-orders"
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:text-green-500 hover:bg-surfaceHover transition-colors"
                     >
@@ -322,7 +322,7 @@ export default function Navbar() {
                 )}
 
                 <Link
-                  to="/orders"
+                  to="/my-orders"
                   onClick={() => setMobileOpen(false)}
                   className="font-condensed text-sm tracking-[0.3em] text-white  uppercase"
                 >

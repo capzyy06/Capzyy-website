@@ -14,6 +14,7 @@ import authRoutes from './routes/authRoutes.js';
 import mediaRoutes from './routes/mediaRoutes.js';
 import heroBannerRoutes from './routes/heroBannerRoutes.js';
 import supportRoutes from './routes/supportRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
@@ -100,6 +101,7 @@ app.use('/api/v1/orders',      orderRoutes);
 app.use('/api/v1/media',       mediaRoutes);
 app.use('/api/v1/hero-banner', heroBannerRoutes);
 app.use('/api/v1/support',     supportRoutes);
+app.use('/api/v1/payments',    paymentRoutes);
 
 // ─── Error Handlers ────────────────────────────────────────────────
 app.use(notFound);
