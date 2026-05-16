@@ -173,8 +173,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     res.status(404); throw new Error('Order not found');
   }
 
-  // Send email for delivered or rejected
-  if (status === 'delivered' || status === 'rejected') {
+  if (ADMIN_ALLOWED_STATUSES.includes(status)) {
     try {
       await sendOrderStatusEmail({
         to:           order.customer.email,
