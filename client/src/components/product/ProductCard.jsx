@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../../store/slices/cartSlice';
@@ -8,7 +7,6 @@ import { formatPrice } from '../../utils/formatPrice';
 import toast from 'react-hot-toast';
 
 export default function ProductCard({ product }) {
-  const [hovered, setHovered] = useState(false);
   const dispatch = useDispatch();
 
   const img1 = product.images?.[0]?.url || '/placeholder.jpg';
@@ -30,32 +28,25 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <Link to={`/product/${product.slug}`} className="group block" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <Link to={`/product/${product.slug}`} className="group block">
       <div className="relative overflow-hidden bg-surface aspect-square">
         <ProductBadge isNewArrival={product.isNewArrival} isBestSeller={product.isBestSeller} discountPercent={discountPercent} />
         <img
-          src={img1}
+          src={img2 || img1}
           alt={product.name}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${hovered && img2 ? 'opacity-0' : 'opacity-100'}`}
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-500"
         />
-        {img2 && (
-          <img
-            src={img2}
-            alt={product.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${hovered ? 'opacity-100' : 'opacity-0'}`}
-          />
-        )}
-        {/* Quick add */}
+        {/* Quick add — always visible */}
         <button
           onClick={handleQuickAdd}
-          className={`absolute bottom-0 left-0 right-0 bg-white text-black text-xs font-bold tracking-widest uppercase py-3 transition-transform duration-300 ${hovered ? 'translate-y-0' : 'translate-y-full'}`}
+          className="absolute bottom-0 left-0 right-0 bg-white text-black text-xs font-bold tracking-widest uppercase py-3 transition-opacity duration-300"
         >
           Quick Add
         </button>
       </div>
       <div className="mt-3 space-y-1">
         <p className="text-xs text-textMuted uppercase tracking-wider">{product.category?.name}</p>
-        <h3 className="text-white font-semibold text-sm tracking-wide group-hover:text-gray-300 transition-colors">{product.name}</h3>
+        <h3 className="text-white font-semibold text-sm tracking-wide">{product.name}</h3>
         <div className="flex items-center gap-2">
           <span className="text-white font-semibold text-sm">{formatPrice(product.price)}</span>
           {product.compareAtPrice > product.price && (

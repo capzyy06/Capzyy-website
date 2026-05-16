@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import CapzyyLogo from '../../assets/Capzyy_logo.png';
 
-export default function Preloader() {
+export default function Preloader({ onDone }) {
   const [pct, setPct] = useState(0);
   const [done, setDone] = useState(false);
 
@@ -13,7 +13,12 @@ export default function Preloader() {
         v = 100;
         setPct(100);
         clearInterval(id);
-        setTimeout(() => setDone(true), 900);
+        // 900ms hold at 100% → then slide up (750ms) → then notify parent
+        setTimeout(() => {
+          setDone(true);
+          // wait for the 0.75s slide-up transition to fully finish before showing chat
+          setTimeout(() => onDone?.(), 800);
+        }, 900);
       } else {
         setPct(Math.floor(v));
       }
@@ -45,7 +50,6 @@ export default function Preloader() {
           width: '420px',
           height: '420px',
           objectFit: 'contain',
-
         }}
       />
 

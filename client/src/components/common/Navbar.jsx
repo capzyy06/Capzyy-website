@@ -112,7 +112,7 @@ export default function Navbar() {
               <Link
                 key={l.to}
                 to={l.to}
-                className="story-link font-condensed text-bold tracking-[0.25em] text-white hover:text-green-500 uppercase"
+                className="story-link font-condensed text-bold tracking-[0.25em] text-white hover:text-white/70 uppercase"
               >
                 {l.label}
               </Link>
@@ -139,7 +139,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setShowSearch(false)}
-                  className="ml-2 text-white hover:text-green-500"
+                  className="ml-2 text-white hover:text-white/70"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -147,7 +147,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => setShowSearch(true)}
-                className="text-white hover:text-green-500 transition-colors"
+                className="text-white hover:text-white/70 transition-colors"
                 aria-label="Search"
               >
                 <Search className="w-5 h-5" />
@@ -157,7 +157,7 @@ export default function Navbar() {
             {/* Cart */}
             <button
               onClick={() => dispatch(toggleCart())}
-              className="relative text-white hover:text-green-500 transition-colors"
+              className="relative text-white hover:text-white/70 transition-colors"
               aria-label="Cart"
             >
               <ShoppingBag className="w-5 h-5" />
@@ -180,7 +180,7 @@ export default function Navbar() {
                     ? setProfileOpen((p) => !p)
                     : navigate('/login')
                 }
-                className="text-white hover:text-green-500 transition-colors"
+                className="text-white hover:text-white/70 transition-colors"
                 aria-label="Account"
               >
                 <User className="w-5 h-5" />
@@ -218,7 +218,7 @@ export default function Navbar() {
                       <Link
                         to="/admin"
                         onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:text-green-500 hover:bg-surfaceHover transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:text-white/70 hover:bg-surfaceHover transition-colors"
                       >
                         <LayoutDashboard className="w-4 h-4" />
                         Admin Dashboard
@@ -228,7 +228,7 @@ export default function Navbar() {
                     <Link
                       to="/my-orders"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:text-green-500 hover:bg-surfaceHover transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:text-white/70 hover:bg-surfaceHover transition-colors"
                     >
                       <Package className="w-4 h-4" />
                       My Orders
@@ -249,7 +249,7 @@ export default function Navbar() {
             {/* Mobile menu */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden text-white hover:text-green-500"
+              className="lg:hidden text-white hover:text-white/70"
               aria-label="Menu"
             >
               <Menu className="w-6 h-6" />
@@ -284,7 +284,7 @@ export default function Navbar() {
               key={l.to}
               to={l.to}
               onClick={() => setMobileOpen(false)}
-              className="font-display text-5xl tracking-wide text-white hover:text-green-500 transition-colors"
+              className="font-display text-5xl tracking-wide text-white hover:text-white/70 transition-colors"
               style={{
                 animation: mobileOpen
                   ? `rise 0.6s ${0.1 + i * 0.06}s both`

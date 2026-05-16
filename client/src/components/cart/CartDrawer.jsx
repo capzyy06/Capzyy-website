@@ -77,25 +77,29 @@ export default function CartDrawer() {
         </div>
 
         {/* Footer */}
-        {items.length > 0 && (
+        {items.length > 0 && (() => {
+          const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
+          return (
           <div className="px-6 py-5 border-t border-border space-y-3 bg-surface">
-            {/* Free shipping progress */}
-            {total < 999 && (
+            {/* Shipping status */}
+            {capCount === 1 && (
               <div className="space-y-1.5">
                 <p className="text-textMuted text-xs tracking-wider">
-                  Add <span className="text-white">{formatPrice(999 - total)}</span> more for free shipping
+                  🧢 Add <span className="text-white">1 more cap</span> to unlock free shipping!
                 </p>
                 <div className="h-0.5 bg-border rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((total / 999) * 100, 100)}%`, background: '#C8F135' }}
-                  />
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: '50%', background: '#C8F135' }} />
                 </div>
               </div>
             )}
-            {total >= 999 && (
+            {capCount >= 2 && capCount < 3 && (
               <p className="text-xs tracking-wider" style={{ color: '#C8F135' }}>
                 ✓ FREE SHIPPING UNLOCKED
+              </p>
+            )}
+            {capCount >= 3 && (
+              <p className="text-xs tracking-wider text-lime-400">
+                🎁 FREE SHIPPING + SURPRISE CAP!
               </p>
             )}
 
@@ -111,7 +115,8 @@ export default function CartDrawer() {
               Proceed to Checkout
             </button>
           </div>
-        )}
+          );
+        })()}
       </div>
     </>
   );

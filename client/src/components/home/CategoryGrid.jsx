@@ -57,7 +57,7 @@ export default function CategoryGrid() {
                 src={cat.image.url}
                 alt={cat.name}
                 loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+                className="absolute inset-0 w-full h-full object-cover scale-105 transition-all duration-700"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-surface">
@@ -74,7 +74,7 @@ export default function CategoryGrid() {
                     {cat.productCount ? `${cat.productCount} styles` : 'Explore'}
                   </p>
                 </div>
-                <span className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-black flex items-center justify-center translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                <span className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-black flex items-center justify-center transition-all duration-500">
                   <ArrowUpRight className="w-5 h-5" />
                 </span>
               </div>

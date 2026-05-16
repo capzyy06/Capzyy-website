@@ -84,7 +84,7 @@ export default function FeaturedCollection() {
                   src={p.images[0].url}
                   alt={p.name}
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-surfaceHover">
@@ -117,8 +117,8 @@ export default function FeaturedCollection() {
                 ₹{p.price?.toLocaleString('en-IN')}
               </span>
 
-              {/* Hover panel */}
-              <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-white text-black py-3 px-4 flex items-center justify-between">
+              {/* Always-visible Add to Cart panel */}
+              <div className="absolute inset-x-0 bottom-0 bg-white text-black py-3 px-4 flex items-center justify-between">
                 <span className="font-condensed text-xs tracking-[0.3em] uppercase">Add to Cart</span>
                 <Plus className="w-4 h-4" />
               </div>
