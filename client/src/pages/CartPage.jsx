@@ -54,9 +54,7 @@ export default function CartPage() {
                 {shipping === 0 ? 'FREE' : formatPrice(shipping)}
               </span>
             </div>
-            {shipping > 0 && (
-              <p className="text-textMuted text-xs">Add {formatPrice(SHIPPING_THRESHOLD - total)} more for free shipping</p>
-            )}
+            
           </div>
           <div className="flex justify-between text-white font-bold tracking-wider">
             <span>TOTAL</span><span>{formatPrice(grandTotal)}</span>
