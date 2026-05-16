@@ -14,12 +14,12 @@ export default function CartPage() {
   const grandTotal = total + shipping;
 
   const handleCheckout = () => {
-  if (!isAuthenticated) {
-    navigate('/login?redirect=/checkout');
-  } else {
-    navigate('/checkout');
-  }
-};
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   if (!items.length) return (
     <div className="max-w-7xl mx-auto px-4 py-32 text-center">
