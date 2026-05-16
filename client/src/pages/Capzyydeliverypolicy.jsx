@@ -242,7 +242,7 @@ const styles = `
 const statCards = [
   { icon: "📦", title: "Standard Shipping", highlight: "5–7 days", desc: "Estimated delivery after your order is confirmed and dispatched." },
   { icon: "🚀", title: "Processing Time", highlight: "1–2 days", desc: "Orders are packed and handed to our courier within 1–2 business days." },
-  { icon: "💸", title: "Free Shipping", highlight: "On orders ₹999+", desc: "Flat shipping fee applies for smaller orders. No hidden charges!" },
+  { icon: "💸", title: "Free Shipping", highlight: "On 2+ Caps", desc: "Order 2 or more caps and shipping is on us. Single cap orders ship for a flat ₹99. No hidden charges!" },
 ];
 
 const steps = [

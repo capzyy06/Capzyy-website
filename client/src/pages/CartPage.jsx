@@ -3,23 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import CartItem from '../components/cart/CartItem';
 import { formatPrice } from '../utils/formatPrice';
 
-const SHIPPING_THRESHOLD = 999;
 const SHIPPING_COST = 99;
 
 export default function CartPage() {
   const { items, total, itemCount } = useSelector(s => s.cart);
   const { isAuthenticated } = useSelector(s => s.auth);
   const navigate = useNavigate();
-  const shipping = total >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const shipping = capCount >= 2 ? 0 : capCount === 1 ? SHIPPING_COST : 0;
   const grandTotal = total + shipping;
 
   const handleCheckout = () => {
-  if (!isAuthenticated) {
-    navigate('/login?redirect=/checkout');
-  } else {
-    navigate('/checkout');
-  }
-};
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   if (!items.length) return (
     <div className="max-w-7xl mx-auto px-4 py-32 text-center">
@@ -54,7 +54,12 @@ export default function CartPage() {
                 {shipping === 0 ? 'FREE' : formatPrice(shipping)}
               </span>
             </div>
-            
+            {capCount === 1 && (
+              <p className="text-textMuted text-xs">🧢 Add 1 more cap for free shipping!</p>
+            )}
+            {capCount >= 3 && (
+              <p className="text-xs text-lime-400">🎁 You're getting a surprise cap with your order!</p>
+            )}
           </div>
           <div className="flex justify-between text-white font-bold tracking-wider">
             <span>TOTAL</span><span>{formatPrice(grandTotal)}</span>
