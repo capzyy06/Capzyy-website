@@ -55,17 +55,15 @@ export default function CheckoutPage() {
   const isLoading = isCreatingOrder || isCreatingPayment || paying;
 
   // ── Shipping logic ──────────────────────────────────────────────────────────
+  // 1 cap  → ₹99 shipping
+  // 2 caps → FREE shipping
+  // 3+ caps → FREE shipping + surprise cap
   const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const shipping =
-    capCount >= 2 ? 0
-    : capCount === 1 ? SHIPPING_COST
-    : total >= SHIPPING_THRESHOLD ? 0
-    : SHIPPING_COST;
+  const shipping = capCount >= 2 ? 0 : capCount === 1 ? SHIPPING_COST : 0;
 
   const grandTotal      = total + shipping;
   const showCapUpsell   = capCount === 1;
   const showSurpriseMsg = capCount >= 3;
-
   useEffect(() => {
     if (!items.length) navigate('/cart');
   }, [items.length, navigate]);

@@ -8,8 +8,8 @@ import BrandStatement from '../components/home/BrandStatement';
 import Reviews from '../components/home/Reviews';
 import FAQ from '../components/home/FAQ';
 import SupportWidget from '../components/home/SupportWidget';
-import { useEffect } from 'react';
-import { useSelector } from 'react-redux';              // ← add
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 function useReveal() {
   useEffect(() => {
@@ -32,11 +32,18 @@ function useReveal() {
 
 export default function HomePage() {
   useReveal();
-  const user = useSelector((state) => state.auth.user);  // ← add
+  const user = useSelector((state) => state.auth.user);
+  const [showChat, setShowChat] = useState(false);
+
+  useEffect(() => {
+    // Fallback: show chat after 4s no matter what
+    const fallback = setTimeout(() => setShowChat(true), 4000);
+    return () => clearTimeout(fallback);
+  }, []);
 
   return (
     <div className="home-page relative bg-bg text-white">
-      <Preloader />
+      <Preloader onDone={() => setShowChat(true)} />
       <div className="grain" />
       <HeroBanner />
       <MarqueeStrip invert />
@@ -66,7 +73,7 @@ export default function HomePage() {
       </div>
       <FAQ />
 
-      <SupportWidget user={user} />       {/* ← pass user */}
+      {showChat && <SupportWidget user={user} />}
     </div>
   );
 }
