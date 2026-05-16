@@ -29,7 +29,7 @@ export async function sendOrderStatusEmail({
     shipped: `
       <p>Hi ${customerName},</p>
       <p>Great news! Your order <strong>${orderNumber}</strong> is on its way.</p>
-      <p>You should receive it within 3–7 business days. We'll keep you updated.</p>
+      <p>You will receive it within 3–7 business days. We'll keep you updated.</p>
       <p>If you have any questions, reach us on Instagram <a href="https://instagram.com/capzyy">@capzyy</a>.</p>
     `,
     delivered: `
