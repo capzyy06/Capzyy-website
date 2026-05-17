@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { sendOrderStatusEmail } from '../utils/sendEmail.js';
+import config from '../config/env.js';
 
 // ─── POST /api/v1/orders ──────────────────────────────────────────────────────
 export const createOrder = asyncHandler(async (req, res) => {
@@ -58,13 +59,14 @@ export const createOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  const SHIPPING_COST = 99;
+  const SHIPPING_COST = config.SHIPPING_COST;
   const subtotal      = resolvedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const capCount      = resolvedItems.reduce((sum, i) => sum + i.quantity, 0);
   const shippingCost  = capCount >= 2 ? 0 : SHIPPING_COST;
   const total         = subtotal + shippingCost;
 
   for (const item of resolvedItems) {
+    // Always decrement root stock
     const updated = await Product.findOneAndUpdate(
       { _id: item.product, stock: { $gte: item.quantity } },
       { $inc: { stock: -item.quantity } },
@@ -73,6 +75,18 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (!updated) {
       res.status(409);
       throw new Error(`"${item.name}" just sold out. Please remove it from your cart and try again.`);
+    }
+
+    // Also decrement variant-level stock if a variant was selected
+    if (item.variant?.color || item.variant?.size) {
+      await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          'variants.color': item.variant.color,
+          'variants.size':  item.variant.size,
+        },
+        { $inc: { 'variants.$.stock': -item.quantity } }
+      );
     }
   }
 
