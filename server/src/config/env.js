@@ -40,6 +40,7 @@ const config = {
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   SERVER_URL: process.env.SERVER_URL || 'http://localhost:5000',
+  SHIPPING_COST: Number(process.env.SHIPPING_COST) || 99,
   // Email (nodemailer) — optional; status emails are skipped if unset
   EMAIL_HOST: process.env.EMAIL_HOST,
   EMAIL_PORT: process.env.EMAIL_PORT || 587,
