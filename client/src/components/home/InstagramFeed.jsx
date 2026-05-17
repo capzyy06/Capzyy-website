@@ -1,10 +1,34 @@
 const tiles = [
-  { user: '@capzyy.in', product: 'Shadow Brim 01' },
-  { user: '@streetwear.india', product: 'Cream Snap Pro' },
-  { user: '@capzyy.drops', product: 'Olive Mesh Trucker' },
-  { user: '@headwear.daily', product: 'Lime Stitch Bucket' },
-  { user: '@capzyy.fits', product: 'Midnight Dad Cap' },
-  { user: '@india.caps', product: 'Bone Six Panel' },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021024/1_h71crp.jpg',
+    user: '@capzyy.in',
+    product: 'Shadow Brim 01',
+  },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021024/2_gdzvy9.jpg',
+    user: '@streetwear.india',
+    product: 'Cream Snap Pro',
+  },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021023/3_qepwem.jpg',
+    user: '@capzyy.drops',
+    product: 'Olive Mesh Trucker',
+  },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021023/6_ivmi2w.jpg',
+    user: '@headwear.daily',
+    product: 'Lime Stitch Bucket',
+  },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021023/4_oiwuds.jpg',
+    user: '@capzyy.fits',
+    product: 'Midnight Dad Cap',
+  },
+  {
+    img: 'https://res.cloudinary.com/dytpgxkml/image/upload/v1779021023/5_mebzoo.jpg',
+    user: '@india.caps',
+    product: 'Bone Six Panel',
+  },
 ];
 
 export default function InstagramFeed() {
@@ -41,12 +65,12 @@ export default function InstagramFeed() {
             className="group relative aspect-square overflow-hidden bg-surface reveal"
             style={{ transitionDelay: `${i * 60}ms` }}
           >
-            {/* Placeholder tile */}
-            <div className="w-full h-full bg-surfaceHover flex items-center justify-center">
-              <span className="font-display text-3xl text-white/10 tracking-widest">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-            </div>
+            {/* Real image */}
+            <img
+              src={t.img}
+              alt={t.product}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
 
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-bg/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
@@ -59,9 +83,14 @@ export default function InstagramFeed() {
         ))}
       </div>
 
-      <p className="text-center text-textMuted text-xs mt-6 tracking-wider font-condensed">
-        Connect your Instagram feed via Meta API to display live posts
-      </p>
+      <a
+        href="https://instagram.com/capzyy"
+        target="_blank"
+        rel="noreferrer"
+        className="block text-center text-textMuted text-xs mt-6 tracking-wider font-condensed hover:text-white transition-colors"
+      >
+        Follow us on Instagram @capzyy →
+      </a>
     </section>
   );
 }
