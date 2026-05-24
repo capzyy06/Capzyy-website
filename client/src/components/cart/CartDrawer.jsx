@@ -14,7 +14,11 @@ export default function CartDrawer() {
 
   const handleImageClick = (item) => {
     dispatch(closeCart());
-    navigate(`/product/${item.slug}`);
+    // Small delay so drawer close animation finishes, then navigate + scroll top
+    setTimeout(() => {
+      navigate(`/product/${item.slug}`);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 320);
   };
 
   return (
@@ -89,40 +93,36 @@ export default function CartDrawer() {
         {items.length > 0 && (() => {
           const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
           return (
-          <div className="px-6 py-5 border-t border-border space-y-3 bg-surface">
-            {capCount === 1 && (
-              <div className="space-y-1.5">
-                <p className="text-textMuted text-xs tracking-wider">
-                  🧢 Add <span className="text-white">1 more cap</span> to unlock free shipping!
-                </p>
-                <div className="h-0.5 bg-border rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: '50%', background: '#C8F135' }} />
+            <div className="px-6 py-5 border-t border-border space-y-3 bg-surface">
+              {capCount === 1 && (
+                <div className="space-y-1.5">
+                  <p className="text-textMuted text-xs tracking-wider">
+                    🧢 Add <span className="text-white">1 more cap</span> to unlock free shipping!
+                  </p>
+                  <div className="h-0.5 bg-border rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: '50%', background: '#C8F135' }} />
+                  </div>
                 </div>
+              )}
+              {capCount >= 2 && capCount < 3 && (
+                <p className="text-xs tracking-wider" style={{ color: '#C8F135' }}>
+                  ✓ FREE SHIPPING UNLOCKED
+                </p>
+              )}
+              {capCount >= 3 && (
+                <p className="text-xs tracking-wider text-lime-400">
+                  🎁 FREE SHIPPING + SURPRISE CAP!
+                </p>
+              )}
+              <div className="flex justify-between text-white font-semibold text-sm tracking-wider pt-1">
+                <span>SUBTOTAL</span>
+                <span>{formatPrice(total)}</span>
               </div>
-            )}
-            {capCount >= 2 && capCount < 3 && (
-              <p className="text-xs tracking-wider" style={{ color: '#C8F135' }}>
-                ✓ FREE SHIPPING UNLOCKED
-              </p>
-            )}
-            {capCount >= 3 && (
-              <p className="text-xs tracking-wider text-lime-400">
-                🎁 FREE SHIPPING + SURPRISE CAP!
-              </p>
-            )}
-
-            <div className="flex justify-between text-white font-semibold text-sm tracking-wider pt-1">
-              <span>SUBTOTAL</span>
-              <span>{formatPrice(total)}</span>
+              <p className="text-textMuted text-xs">Shipping calculated at checkout</p>
+              <button onClick={handleCheckout} className="btn-primary w-full text-center">
+                Proceed to Checkout
+              </button>
             </div>
-            <p className="text-textMuted text-xs">Shipping calculated at checkout</p>
-            <button
-              onClick={handleCheckout}
-              className="btn-primary w-full text-center"
-            >
-              Proceed to Checkout
-            </button>
-          </div>
           );
         })()}
       </div>
