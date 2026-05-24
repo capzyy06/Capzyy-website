@@ -12,9 +12,14 @@ export default function CartDrawer() {
 
   const handleCheckout = () => { dispatch(closeCart()); navigate('/checkout'); };
 
+  const handleImageClick = (item) => {
+    dispatch(closeCart());
+    navigate(`/product/${item.slug}`);
+  };
+
   return (
     <>
-      {/* Overlay — starts from very top to cover full screen behind drawer */}
+      {/* Overlay */}
       {isCartOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40"
@@ -22,23 +27,21 @@ export default function CartDrawer() {
         />
       )}
 
-      {/* Drawer — starts BELOW the navbar using var(--nav-h) */}
+      {/* Drawer */}
       <div
         className={`fixed right-0 w-full max-w-md pt-16 bg-surface z-50 flex flex-col transition-transform duration-300 ${
           isCartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{
-          top: 'var(--nav-h, 60px)',          // ← sits below navbar
-          height: 'calc(100vh - var(--nav-h, 60px))', // ← fills rest of screen
+          top: 'var(--nav-h, 60px)',
+          height: 'calc(100vh - var(--nav-h, 60px))',
           boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
         }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
-            <h2 className="font-display text-xl tracking-widest text-white">
-              YOUR BAG
-            </h2>
+            <h2 className="font-display text-xl tracking-widest text-white">YOUR BAG</h2>
             <p className="text-textSecondary text-xs tracking-widest mt-0.5">
               {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'}
             </p>
@@ -71,7 +74,13 @@ export default function CartDrawer() {
             </div>
           ) : (
             <div className="space-y-1">
-              {items.map(item => <CartItem key={item.key} item={item} />)}
+              {items.map(item => (
+                <CartItem
+                  key={item.key}
+                  item={item}
+                  onImageClick={() => handleImageClick(item)}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -81,7 +90,6 @@ export default function CartDrawer() {
           const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
           return (
           <div className="px-6 py-5 border-t border-border space-y-3 bg-surface">
-            {/* Shipping status */}
             {capCount === 1 && (
               <div className="space-y-1.5">
                 <p className="text-textMuted text-xs tracking-wider">
