@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { removeFromCart, updateQuantity } from '../../store/slices/cartSlice';
 import { formatPrice } from '../../utils/formatPrice';
 
@@ -7,7 +8,12 @@ export default function CartItem({ item }) {
 
   return (
     <div className="flex gap-4 py-4 border-b border-border">
-      <img src={item.image || '/placeholder.jpg'} alt={item.name} className="w-20 h-20 object-cover bg-surface flex-shrink-0" />
+      <Link
+        to={item.categorySlug ? `/category/${item.categorySlug}` : `/product/${item.slug}`}
+        className="flex-shrink-0"
+      >
+        <img src={item.image || '/placeholder.jpg'} alt={item.name} className="w-20 h-20 object-cover bg-surface" />
+      </Link>
       <div className="flex-1 min-w-0">
         <h4 className="text-white text-sm font-semibold truncate">{item.name}</h4>
         {item.variant?.color && <p className="text-textMuted text-xs mt-0.5">Color: {item.variant.color}</p>}

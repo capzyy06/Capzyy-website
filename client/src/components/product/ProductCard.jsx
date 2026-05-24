@@ -22,6 +22,7 @@ export default function ProductCard({ product }) {
       price: product.price,
       image: img1,
       slug: product.slug,
+      categorySlug: product.category?.slug || '',
     }));
     dispatch(openCart());
     toast.success('Added to cart!');

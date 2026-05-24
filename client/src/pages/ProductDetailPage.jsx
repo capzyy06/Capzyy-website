@@ -39,6 +39,7 @@ export default function ProductDetailPage() {
       price: product.price,
       image: product.images?.[0]?.url || '',
       slug: product.slug,
+      categorySlug: product.category?.slug || '',
       quantity: qty,
       variant: { color: selectedColor?.color, size: selectedSize },
     }));

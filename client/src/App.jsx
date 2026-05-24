@@ -1,10 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
 import Layout from './components/common/Layout';
 import AdminLayout from './admin/AdminLayout';
 import ProtectedAdminRoute from './components/common/ProtectedAdminRoute';
 import ScrollToTop from './components/common/ScrollToTop';
+import { rehydrateAuth } from './store/slices/authSlice';
 
 // Customer pages — eagerly loaded (small, above-the-fold, or auth-critical)
 import HomePage from './pages/HomePage';
@@ -43,6 +45,12 @@ const PageLoader = () => (
 );
 
 export default function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(rehydrateAuth());
+  }, [dispatch]);
+
   return (
     <BrowserRouter>
     <ScrollToTop />

@@ -181,7 +181,7 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
         {/* ── Form ─────────────────────────────────────────────────────────── */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8 pb-[env(safe-area-inset-bottom,16px)]">
           <div>
             <h2 className="font-display text-2xl tracking-widest text-white mb-4">CONTACT INFO</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,7 +218,7 @@ export default function CheckoutPage() {
             {btnLabel}
           </button>
 
-          <p className="text-textMuted text-xs text-center">
+          <p className="text-textMuted text-xs text-center" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
             Payments are processed securely by Cashfree.
           </p>
         </form>

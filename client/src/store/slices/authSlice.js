@@ -3,9 +3,6 @@ import axios from 'axios';
 
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-// Verify cookie is still valid on app load by hitting /auth/me
-// If cookie is gone (mobile browser cleared it), this will fail
-// and we force logout — preventing "not authorized" on API calls
 export const rehydrateAuth = createAsyncThunk(
   'auth/rehydrate',
   async (_, { rejectWithValue }) => {
@@ -25,6 +22,7 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     isAuthenticated: false,
+    isRehydrating: false,
   },
   reducers: {
     setCredentials: (state, { payload }) => {
@@ -38,14 +36,26 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(rehydrateAuth.pending, (state) => {
+        state.isRehydrating = true;
+      })
       .addCase(rehydrateAuth.fulfilled, (state, { payload }) => {
         state.user = payload;
         state.isAuthenticated = true;
+        state.isRehydrating = false;
       })
       .addCase(rehydrateAuth.rejected, (state) => {
-        // Cookie is gone — clear Redux state too
-        state.user = null;
-        state.isAuthenticated = false;
+        // ⚠️ KEY FIX: Do NOT wipe isAuthenticated here.
+        // redux-persist already restored the user from localStorage.
+        // If the /auth/me call fails (network blip, cookie cleared by Safari ITP),
+        // we keep the persisted state — the next real API call will catch the 401
+        // and the user can log in again gracefully. Wiping here causes the
+        // "logged out on back" issue on mobile Safari.
+        state.isRehydrating = false;
+        // Only clear if we had no user to begin with
+        if (!state.user) {
+          state.isAuthenticated = false;
+        }
       });
   },
 });
