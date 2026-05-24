@@ -15,8 +15,11 @@ import { paymentsApi } from './api/paymentsApi';  // ✅ Added paymentsApi impor
 
 // Root reducer
 const rootReducer = combineReducers({
+  // Auth is NOT persisted — the httpOnly cookie is the source of truth.
+  // On page load, rehydrateAuth() in main.jsx verifies the cookie with the server.
+  // Persisting auth caused stale role/user data to show after logout or cookie expiry.
+  auth: authReducer,
   cart: persistReducer({ key: 'capzyy-cart', storage }, cartReducer),
-  auth: persistReducer({ key: 'capzyy-auth', storage }, authReducer),
   ui: uiReducer,
   [productsApi.reducerPath]: productsApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,

@@ -118,7 +118,7 @@ export default function CheckoutPage() {
       // ── Step 3: Load Cashfree SDK and open checkout ─────────────────────────
       const CashfreeSDK = await loadCashfreeSdk();
 
-      const mode = import.meta.env.VITE_CASHFREE_MODE || 'sandbox';
+      const mode = import.meta.env.VITE_CASHFREE_MODE || 'production';
       const cashfree = CashfreeSDK({ mode });
 
       setPaying(true);

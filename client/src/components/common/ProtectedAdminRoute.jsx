@@ -10,18 +10,11 @@ export default function ProtectedAdminRoute({ children }) {
   const checkedRef = useRef(false);
 
   useEffect(() => {
-    // Only verify cookie if Redux says NOT authenticated
-    // (i.e. fresh page load / reload — not right after login)
-    // If isAuthenticated is already true, we just logged in — trust it
     if (checkedRef.current) return;
     checkedRef.current = true;
-
-    if (!isAuthenticated) {
-      dispatch(rehydrateAuth()).finally(() => setChecking(false));
-    } else {
-      setChecking(false);
-    }
-  }, [dispatch, isAuthenticated]);
+    // Auth is no longer persisted — always verify the cookie with the server
+    dispatch(rehydrateAuth()).finally(() => setChecking(false));
+  }, [dispatch]);
 
   if (checking) {
     return (
