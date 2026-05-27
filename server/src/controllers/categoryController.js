@@ -83,7 +83,7 @@ export const createCategory = asyncHandler(async (req, res) => {
     name: req.body.name,
     description: req.body.description || '',
     displayOrder: req.body.displayOrder || 0,
-    isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+    isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true || req.body.isActive === '1' || req.body.isActive === 1) : true,
     image: imageData,
   });
 
@@ -109,7 +109,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
   if (req.body.name       !== undefined) category.name        = req.body.name;
   if (req.body.description !== undefined) category.description = req.body.description;
   if (req.body.displayOrder !== undefined) category.displayOrder = Number(req.body.displayOrder);
-  if (req.body.isActive   !== undefined) category.isActive    = req.body.isActive === 'true' || req.body.isActive === true;
+  if (req.body.isActive   !== undefined) category.isActive    = req.body.isActive === 'true' || req.body.isActive === true || req.body.isActive === '1' || req.body.isActive === 1;
 
   // Replace image only when a new file was uploaded
   if (req.file) {
