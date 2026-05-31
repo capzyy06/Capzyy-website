@@ -5,6 +5,7 @@ import { useCreateOrderMutation } from '../store/api/ordersApi';
 import { useCreatePaymentOrderMutation } from '../store/api/paymentsApi';
 import { formatPrice } from '../utils/formatPrice';
 import { SHIPPING_THRESHOLD, SHIPPING_COST } from '../constants/config';
+import { openLogin } from '../store/slices/uiSlice';
 import toast from 'react-hot-toast';
 
 const INITIAL = {
@@ -30,17 +31,11 @@ function loadCashfreeSdk() {
 
 export default function CheckoutPage() {
   const { items, total } = useSelector(s => s.cart);
-  // FIX: read logged-in user so we can pre-fill the form and ensure the
-  // order email always matches the account email (needed for /my-orders lookup)
-  const { user }   = useSelector(s => s.auth);
-  const dispatch   = useDispatch();
-  const navigate   = useNavigate();
+  const { user, isAuthenticated, isRehydrating } = useSelector(s => s.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // FIX: pre-fill form from logged-in user account.
-  // This guarantees the customer.email stored on the order matches req.user.email
-  // which is what getMyOrders queries by. If a user types a different email the
-  // order would never appear in their order history.
-  const [form, setForm]     = useState(() => ({
+  const [form, setForm] = useState(() => ({
     ...INITIAL,
     name:  user?.name  || '',
     email: user?.email || '',
@@ -54,21 +49,28 @@ export default function CheckoutPage() {
 
   const isLoading = isCreatingOrder || isCreatingPayment || paying;
 
-  // ── Shipping logic ──────────────────────────────────────────────────────────
-  // 1 cap  → ₹99 shipping
-  // 2 caps → FREE shipping
-  // 3+ caps → FREE shipping + surprise cap
   const capCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const shipping = capCount >= 2 ? 0 : capCount === 1 ? SHIPPING_COST : 0;
 
   const grandTotal      = total + shipping;
   const showCapUpsell   = capCount === 1;
   const showSurpriseMsg = capCount >= 3;
+
+  // Redirect to cart if empty
   useEffect(() => {
     if (!items.length) navigate('/cart');
   }, [items.length, navigate]);
 
+  // Auth guard: open login drawer if not authenticated (wait for rehydration)
+  useEffect(() => {
+    if (isRehydrating) return;
+    if (!isAuthenticated) {
+      dispatch(openLogin('/checkout'));
+    }
+  }, [isAuthenticated, isRehydrating, dispatch]);
+
   if (!items.length) return null;
+  if (!isAuthenticated) return null;
 
   // ── Validation ──────────────────────────────────────────────────────────────
   const validate = () => {
@@ -93,10 +95,6 @@ export default function CheckoutPage() {
     let cfOrderId     = null;
 
     try {
-      // ── Step 1: Create order in our DB ──────────────────────────────────────
-      // FIX: always use the logged-in user's email as customer email.
-      // The server's getMyOrders queries by req.user.email — if the form email
-      // differs the order would be invisible in order history.
       const orderPayload = {
         customer:        { name: form.name, email: user?.email || form.email, phone: form.phone },
         shippingAddress: { line1: form.line1, line2: form.line2, city: form.city, state: form.state, pincode: form.pincode, country: 'India' },
@@ -110,14 +108,11 @@ export default function CheckoutPage() {
       const orderRes = await createOrder(orderPayload).unwrap();
       capzyyOrderId  = orderRes.order._id;
 
-      // ── Step 2: Get Cashfree payment session ────────────────────────────────
       const paymentRes = await createPaymentOrder({ orderId: capzyyOrderId }).unwrap();
       const sessionId  = paymentRes.paymentSessionId;
       cfOrderId        = paymentRes.cfOrderId;
 
-      // ── Step 3: Load Cashfree SDK and open checkout ─────────────────────────
       const CashfreeSDK = await loadCashfreeSdk();
-
       const mode = import.meta.env.VITE_CASHFREE_MODE || 'production';
       const cashfree = CashfreeSDK({ mode });
 
@@ -134,9 +129,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      // ── Step 4: Modal closed without error — go to confirmation ─────────────
-      // Do NOT clearCart here. OrderConfirmationPage verifies with Cashfree
-      // and clears the cart only after confirming the payment is truly PAID.
       navigate(`/order-confirmation/${capzyyOrderId}?cfOrderId=${cfOrderId}`);
 
     } catch (err) {
