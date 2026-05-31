@@ -4,6 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleCart } from '../../store/slices/uiSlice';
 import { logout } from '../../store/slices/authSlice';
 import { useGetCategoriesQuery } from '../../store/api/categoriesApi';
+import axios from 'axios';
+
+const BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 import {
   Search,
   ShoppingBag,
@@ -65,13 +68,15 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${BASE}/auth/logout`, {}, { withCredentials: true });
+    } catch {
+      // Even if the server call fails, clear client state so UI resets
+    }
     dispatch(logout());
-
     setProfileOpen(false);
-
     toast.success('Logged out');
-
     navigate('/');
   };
 

@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { closeCart } from '../../store/slices/uiSlice';
+import { openLogin } from '../../store/slices/uiSlice';
 import CartItem from './CartItem';
 import { formatPrice } from '../../utils/formatPrice';
 
@@ -9,8 +10,17 @@ export default function CartDrawer() {
   const navigate = useNavigate();
   const { isCartOpen } = useSelector(s => s.ui);
   const { items, total, itemCount } = useSelector(s => s.cart);
+  const { isAuthenticated } = useSelector(s => s.auth);
 
-  const handleCheckout = () => { dispatch(closeCart()); navigate('/checkout'); };
+  const handleCheckout = () => {
+    dispatch(closeCart());
+    if (!isAuthenticated) {
+      // Open login drawer with checkout as redirect destination
+      setTimeout(() => dispatch(openLogin('/checkout')), 320);
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   const handleImageClick = (item) => {
     dispatch(closeCart());
