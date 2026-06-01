@@ -206,10 +206,20 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
 // ─── GET /api/v1/orders/stats  (Admin) ───────────────────────────────────────
 export const getOrderStats = asyncHandler(async (req, res) => {
+  // Only count orders where payment was actually completed
+  // Cancelled orders and unpaid/pending-payment orders are excluded from all metrics
+  const PAYMENT_PAID = 'paid';
+
   const [totalOrders, pendingOrders, revenue, totalProducts] = await Promise.all([
-    Order.countDocuments(),
-    Order.countDocuments({ status: 'pending' }),
-    Order.aggregate([{ $group: { _id: null, total: { $sum: '$total' } } }]),
+    // Total confirmed orders = paid only
+    Order.countDocuments({ paymentStatus: PAYMENT_PAID }),
+    // Pending fulfilment = paid but not yet shipped or delivered
+    Order.countDocuments({ paymentStatus: PAYMENT_PAID, status: 'processing' }),
+    // Revenue = sum of paid orders only
+    Order.aggregate([
+      { $match: { paymentStatus: PAYMENT_PAID } },
+      { $group: { _id: null, total: { $sum: '$total' } } },
+    ]),
     Product.countDocuments({ isActive: true }),
   ]);
 

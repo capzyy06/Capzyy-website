@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
+import toast from 'react-hot-toast';
 
 export default function ProductImageGallery({ images = [], name }) {
   const [active, setActive] = useState(0);
+  const [shareCopied, setShareCopied] = useState(false);
   const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
+  const touchEndX   = useRef(null);
 
   if (!images.length) return (
     <div className="aspect-square bg-surface flex items-center justify-center">
@@ -14,23 +16,27 @@ export default function ProductImageGallery({ images = [], name }) {
   const goNext = () => setActive(i => (i + 1) % images.length);
   const goPrev = () => setActive(i => (i - 1 + images.length) % images.length);
 
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = null;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; touchEndX.current = null; };
+  const handleTouchMove  = (e) => { touchEndX.current = e.touches[0].clientX; };
+  const handleTouchEnd   = () => {
     if (touchStartX.current === null || touchEndX.current === null) return;
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 40) {
-      diff > 0 ? goNext() : goPrev();
-    }
+    if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
     touchStartX.current = null;
-    touchEndX.current = null;
+    touchEndX.current   = null;
+  };
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: name, text: `Check out ${name} on CAPZYY`, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setShareCopied(true);
+        toast.success('Link copied!');
+        setTimeout(() => setShareCopied(false), 2000);
+      }).catch(() => toast.error('Could not copy link'));
+    }
   };
 
   return (
@@ -49,6 +55,23 @@ export default function ProductImageGallery({ images = [], name }) {
           draggable={false}
         />
 
+        {/* Share button — top right of image */}
+        <button
+          onClick={handleShare}
+          aria-label="Share product"
+          className="absolute top-3 right-3 w-9 h-9 bg-black/60 hover:bg-black/90 text-white flex items-center justify-center rounded-full transition-colors z-10"
+        >
+          {shareCopied ? (
+            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          )}
+        </button>
+
         {/* Dot indicators */}
         {images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -56,8 +79,8 @@ export default function ProductImageGallery({ images = [], name }) {
               <button
                 key={i}
                 onClick={() => setActive(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  active === i ? 'bg-white w-4' : 'bg-white/40'
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  active === i ? 'bg-white w-4' : 'bg-white/40 w-1.5'
                 }`}
               />
             ))}
@@ -81,7 +104,7 @@ export default function ProductImageGallery({ images = [], name }) {
         )}
       </div>
 
-      {/* Thumbnails — scrollable, always visible */}
+      {/* Thumbnails — scrollable */}
       {images.length > 1 && (
         <div
           className="flex gap-2 overflow-x-auto scroll-smooth"
