@@ -212,9 +212,9 @@ export const getOrderStats = asyncHandler(async (req, res) => {
 
   const [totalOrders, pendingOrders, revenue, totalProducts] = await Promise.all([
     // Total confirmed orders = paid only
-    Order.countDocuments({ paymentStatus: PAYMENT_PAID }),
+    Order.countDocuments({ status: { $ne: 'cancelled' } }),
     // Pending fulfilment = paid but not yet shipped or delivered
-    Order.countDocuments({ paymentStatus: PAYMENT_PAID, status: 'processing' }),
+    Order.countDocuments({ status: 'pending' }),
     // Revenue = sum of paid orders only
     Order.aggregate([
       { $match: { paymentStatus: PAYMENT_PAID } },
